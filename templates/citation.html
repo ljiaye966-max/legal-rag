@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set active = "history" %}
+{% set page_title = "引用详情" %}
+
+{% block content %}
+<section class="card">
+  <h2>引用 [{{ citation.citation_no }}] 详情</h2>
+  <p>
+    <span class="badge">{{ citation.document_type }}</span>
+    <span class="badge green">{{ citation.case_cause }}</span>
+    <span class="badge">相关度 {{ citation.relevance_score }}</span>
+  </p>
+  <table>
+    <tr><th>来源标题</th><td>{{ citation.title }}</td></tr>
+    <tr><th>来源文件</th><td>{{ citation.source_name }}</td></tr>
+    <tr><th>地域年份</th><td>{{ citation.region }} · {{ citation.year }}</td></tr>
+    <tr><th>段落位置</th><td>{{ citation.section_name }}，第 {{ citation.paragraph_no }} 段</td></tr>
+    <tr><th>关键词/向量分数</th><td>{{ citation.keyword_score }} / {{ citation.vector_score }}</td></tr>
+  </table>
+  <h3>原文片段</h3>
+  <p class="quote">{{ citation.quote_text }}</p>
+  <div class="actions">
+    <a class="button secondary" href="javascript:history.back()">返回结果</a>
+  </div>
+</section>
+{% endblock %}

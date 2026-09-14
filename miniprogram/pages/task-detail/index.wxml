@@ -1,0 +1,70 @@
+<view class="page">
+  <view class="card" wx:if="{{task}}">
+    <text class="title">{{task.title}}</text>
+    <view class="wrap-row">
+      <text class="badge {{task.status === 'completed' ? 'success' : 'warning'}}">{{task.status}}</text>
+      <text class="muted">{{task.updated_at}}</text>
+    </view>
+    <view wx:if="{{!result && loading}}" class="empty">正在加载任务状态。</view>
+    <view wx:if="{{!result && !loading && task.status !== 'failed'}}" class="empty">系统正在检索、生成并校验结果，请稍候。</view>
+    <view wx:if="{{!result && !loading && task.status === 'failed'}}" class="empty">推理失败，请返回历史记录重新发起任务。</view>
+  </view>
+
+  <view class="card" wx:if="{{result}}">
+    <view class="row">
+      <text class="section-title">推理结果</text>
+      <text class="badge {{validation.passed ? 'success' : 'warning'}}">{{validation.passed ? '校验通过' : '需谨慎查看'}}</text>
+    </view>
+    <view class="audit-summary">
+      <text class="audit-title">法条/案号回检</text>
+      <text wx:if="{{referenceAudit.total}}" class="audit-value">引用准确率 {{referenceAudit.citation_accuracy}}% · {{referenceAudit.verified}}/{{referenceAudit.total}} 通过</text>
+      <text wx:else class="muted">本次结果未出现可核验的法条号或案号。</text>
+    </view>
+    <view wx:if="{{validation.warnings.length}}" class="warning-box">
+      <text wx:for="{{validation.warnings}}" wx:key="*this" class="item-text">{{item}}</text>
+    </view>
+    <text class="result-content" user-select>{{result.result_markdown}}</text>
+    <view class="wrap-row result-actions">
+      <button size="mini" class="secondary-btn" bindtap="copyResult">复制结果</button>
+      <button size="mini" class="secondary-btn" bindtap="exportResult">复制报告</button>
+      <button size="mini" class="primary-btn" bindtap="goCompare">类案对比</button>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{result}}">
+    <text class="section-title">可溯源推理链</text>
+    <view wx:for="{{reasoningChain}}" wx:key="id" class="chain-step">
+      <text class="chain-title">{{index + 1}}. {{item.title}}</text>
+      <text class="item-text">{{item.summary}}</text>
+      <view wx:if="{{item.sources.length}}" class="chain-sources">
+        <text wx:for="{{item.sources}}" wx:for-item="source" wx:key="label" class="chain-source" data-id="{{source.document_id}}" bindtap="goDocument">{{source.label}}</text>
+      </view>
+    </view>
+    <view wx:if="{{caseMetrics.top5_count}}" class="metric-line">
+      <text>类案 Recall@5：{{caseMetrics.recall_at_5}} · 同案由命中 {{caseMetrics.same_cause_hits}}/{{caseMetrics.top5_count}}</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{result}}">
+    <text class="section-title">引用来源</text>
+    <view wx:for="{{citations}}" wx:key="id" class="list-item" data-id="{{item.document_id}}" bindtap="goDocument">
+      <view class="row">
+        <text class="item-title">[{{item.citation_no}}] {{item.title}}</text>
+        <text class="badge">{{item.relevance_score}}</text>
+      </view>
+      <text class="muted">{{item.document_type}} · {{item.case_cause}} · {{item.region}} · {{item.year}}</text>
+      <text class="item-text">{{item.quote_text}}</text>
+    </view>
+    <view wx:if="{{!citations.length}}" class="empty">本次推理没有可展示的引用。</view>
+  </view>
+
+  <view class="card" wx:if="{{result}}">
+    <text class="section-title">结果反馈</text>
+    <view class="wrap-row">
+      <button size="mini" class="{{feedbackRating === 'helpful' ? 'primary-btn' : 'secondary-btn'}}" data-rating="helpful" bindtap="selectRating">有帮助</button>
+      <button size="mini" class="{{feedbackRating === 'unhelpful' ? 'primary-btn' : 'secondary-btn'}}" data-rating="unhelpful" bindtap="selectRating">无帮助</button>
+    </view>
+    <textarea class="textarea" value="{{feedbackComment}}" bindinput="bindFeedback" placeholder="可选：说明结果的优点或需要改进的地方" />
+    <button class="primary-btn" bindtap="submitFeedback">提交反馈</button>
+  </view>
+</view>

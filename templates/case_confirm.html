@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set active = "case" %}
+{% set page_title = "要素确认" %}
+
+{% block content %}
+<form method="post" action="/tasks/{{ task_id }}/reason">
+  <section class="grid grid-2">
+    <div class="card">
+      <h2>可编辑案件要素</h2>
+      <label>案由</label>
+      <input name="fact_cause" value="{{ facts['案由'] }}" required>
+      <label>主体</label>
+      <textarea name="fact_parties" required>{{ facts['主体'] }}</textarea>
+      <label>事实</label>
+      <textarea name="fact_core" required>{{ facts['核心事实'] }}</textarea>
+      <label>诉求</label>
+      <textarea name="fact_claim" required>{{ facts['诉求'] }}</textarea>
+      <label>证据</label>
+      <textarea name="fact_evidence" required>{{ facts['证据'] }}</textarea>
+      <label>争点</label>
+      <textarea name="fact_focus" required>{{ facts['争议焦点'] }}</textarea>
+      <label>疑似敏感信息</label>
+      <textarea name="fact_sensitive">{{ facts['疑似敏感信息'] | join('、') }}</textarea>
+    </div>
+    <div class="card">
+      <h2>推理前确认</h2>
+      <label>案情全文</label>
+      <textarea name="case_text" required>{{ case_text }}</textarea>
+      <label>检索案由</label>
+      <select name="case_cause">
+        {% for item in ["全部", "合同纠纷", "民间借贷", "劳动争议", "交通事故", "婚姻家事"] %}
+        <option value="{{ item }}" {{ "selected" if filters.case_cause == item else "" }}>{{ item }}</option>
+        {% endfor %}
+      </select>
+      <label>检索地域</label>
+      <select name="region">
+        {% for item in ["全部", "全国", "江苏", "浙江", "广东", "四川", "山东"] %}
+        <option value="{{ item }}" {{ "selected" if filters.region == item else "" }}>{{ item }}</option>
+        {% endfor %}
+      </select>
+      <label>检索年份</label>
+      <select name="year">
+        {% for item in ["全部", "2026", "2025", "2024", "2023", "2022", "2021", "2020"] %}
+        <option value="{{ item }}" {{ "selected" if filters.year|string == item else "" }}>{{ item }}</option>
+        {% endfor %}
+      </select>
+      <p class="quote">系统输出仅供课程教学和辅助分析，不构成法律意见或裁判结论。实际案件应由专业人士结合完整证据判断。</p>
+      <label><input style="width:auto;" type="checkbox" name="agreed" value="yes" required> 我已核对并确认继续推理</label>
+      <div class="actions">
+        <button type="submit">保存要素并开始 RAG 推理</button>
+        <a class="button secondary" href="/cases/new">返回重新录入</a>
+      </div>
+    </div>
+  </section>
+</form>
+{% endblock %}

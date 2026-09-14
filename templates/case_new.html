@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set active = "case" %}
+{% set page_title = "案情录入" %}
+
+{% block content %}
+<form method="post" action="/cases/confirm" enctype="multipart/form-data">
+  <section class="grid grid-2">
+    <div class="card">
+      <h2>输入案件事实</h2>
+      <p class="muted">可以直接粘贴案情，也可以上传 TXT/PDF 案情材料；两者同时填写时会合并分析。</p>
+      <label>案情文本</label>
+      <textarea name="case_text" placeholder="请粘贴案情经过、诉求、证据材料等内容">张某与李某签订买卖合同，李某收到货物后一直未支付尾款。张某保留了合同、发货单、微信聊天记录和转账记录，希望判断是否可以要求继续付款并承担违约责任。</textarea>
+      <label>上传案情材料</label>
+      <input type="file" name="case_file" accept=".txt,.pdf">
+      <p class="muted">支持 TXT、PDF。上传扫描版 PDF 可能无法识别文字，建议使用可复制文字的 PDF。</p>
+      <div class="actions">
+        <button type="submit">检测并进入要素确认</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>检索条件</h2>
+      <label>案由</label>
+      <select name="case_cause">
+        <option>全部</option>
+        <option>合同纠纷</option>
+        <option>民间借贷</option>
+        <option>劳动争议</option>
+        <option>交通事故</option>
+        <option>婚姻家事</option>
+      </select>
+      <label>地域</label>
+      <select name="region">
+        <option>全部</option>
+        <option>全国</option>
+        <option>江苏</option>
+        <option>浙江</option>
+        <option>广东</option>
+        <option>四川</option>
+        <option>山东</option>
+      </select>
+      <label>年份</label>
+      <select name="year">
+        <option>全部</option>
+        <option>2026</option>
+        <option>2025</option>
+        <option>2024</option>
+        <option>2023</option>
+        <option>2022</option>
+        <option>2021</option>
+        <option>2020</option>
+      </select>
+      <p class="muted">这些条件会用于后续知识库检索；不确定时保持“全部”即可。</p>
+    </div>
+  </section>
+</form>
+{% endblock %}

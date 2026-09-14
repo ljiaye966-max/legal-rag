@@ -1,0 +1,20 @@
+<view class="page">
+  <view class="card">
+    <view class="row">
+      <text class="title">知识库管理</text>
+      <button size="mini" class="primary-btn" bindtap="goCreate">新增</button>
+    </view>
+    <text class="subtitle">小程序端支持文本形式的新建、编辑和删除；文件导入可继续使用 Web 管理端。</text>
+  </view>
+  <view class="card">
+    <view wx:for="{{documents}}" wx:key="id" class="list-item">
+      <text class="item-title">{{item.title}}</text>
+      <text class="muted">{{item.document_type}} · {{item.case_cause}} · {{item.region}} · {{item.year}} · {{item.chunk_count}} 个分块</text>
+      <view class="wrap-row" style="margin-top: 16rpx;">
+        <button size="mini" class="secondary-btn" data-id="{{item.id}}" bindtap="goEdit">编辑</button>
+        <button size="mini" class="danger-btn" data-id="{{item.id}}" bindtap="deleteDocument">删除</button>
+      </view>
+    </view>
+    <view wx:if="{{!documents.length && !loading}}" class="empty">暂无知识库文档。</view>
+  </view>
+</view>

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% set active = "history" %}
+{% set page_title = "推理结果" %}
+
+{% block content %}
+<section class="grid grid-2">
+  <div class="card">
+    <h2>{{ task.title }}</h2>
+    <p><span class="badge red">仅供教学辅助分析</span> <span class="muted">模型：{{ result.model_name }}，耗时：{{ result.latency_ms }} ms</span></p>
+    <p>
+      {% if validation.passed %}
+      <span class="badge green">校验通过</span>
+      {% else %}
+      <span class="badge amber">需谨慎查看</span>
+      {% endif %}
+      <span class="muted">状态：{{ task.status }}</span>
+    </p>
+    {% if validation.warnings %}
+    <div class="quote">
+      {% for warning in validation.warnings %}
+      <div>{{ warning }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% set audit = validation.reference_audit or {} %}
+    <div class="quote">
+      <strong>法条/案号回检</strong><br>
+      {% if audit.total %}
+      引用准确率 {{ audit.citation_accuracy }}%（{{ audit.verified }}/{{ audit.total }} 通过）
+      {% else %}
+      本次结果未出现可核验的法条号或案号。
+      {% endif %}
+    </div>
+    <article class="result-md">
+      {{ result.result_markdown | markdown_html | safe }}
+    </article>
+    <div class="actions">
+      <a class="button" href="/tasks/{{ task.id }}/export">导出 Markdown</a>
+      <a class="button secondary" href="/compare?task_id={{ task.id }}">类案对比</a>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:24px 0;">
+    <form method="post" action="/feedback">
+      <input type="hidden" name="task_id" value="{{ task.id }}">
+      <input type="hidden" name="result_id" value="{{ result.id }}">
+      <label>结果反馈</label>
+      <select name="rating">
+        <option value="helpful">有帮助</option>
+        <option value="unhelpful">无帮助</option>
+      </select>
+      <label>原因</label>
+      <input name="reason" placeholder="事实错误 / 法条错误 / 引用无关 / 表达不清">
+      <label>补充说明</label>
+      <input name="comment" placeholder="可选">
+      <div class="actions"><button type="submit">提交反馈</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>可溯源推理链</h2>
+    {% for step in validation.reasoning_chain or [] %}
+    <div class="quote">
+      <strong>{{ loop.index }}. {{ step.title }}</strong><br>
+      {{ step.summary }}
+      {% for source in step.sources %}
+      {% if source.document_id %}
+      <br><a href="/documents/{{ source.document_id }}">{{ source.label }}</a>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+    {% set metrics = validation.case_retrieval_metrics or {} %}
+    {% if metrics.top5_count %}
+    <p class="muted">类案 Recall@5：{{ metrics.recall_at_5 }}；同案由命中：{{ metrics.same_cause_hits }}/{{ metrics.top5_count }}</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2>引用来源</h2>
+    <p class="muted">点击编号查看原文片段和来源元数据。</p>
+    <table>
+      <thead><tr><th>编号</th><th>来源</th><th>分数</th></tr></thead>
+      <tbody>
+        {% for item in citations %}
+        <tr>
+          <td><a href="/citations/{{ item.id }}">[{{ item.citation_no }}]</a></td>
+          <td><a href="/documents/{{ item.document_id }}">{{ item.title }}</a><br><span class="muted">{{ item.document_type }} · {{ item.case_cause }}</span></td>
+          <td>{{ item.relevance_score }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

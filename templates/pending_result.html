@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set active = "history" %}
+{% set page_title = "任务未生成" %}
+
+{% block content %}
+{% if task.status in ["queued", "running", "retrieving", "generating", "validating"] %}
+<meta http-equiv="refresh" content="2">
+{% endif %}
+<section class="card">
+  <h2>{{ task.title }}</h2>
+  <p class="muted">这个任务目前是 {{ task.status }} 状态，尚未生成推理报告。</p>
+  <div class="actions">
+    <a class="button" href="/cases/new">重新录入案情</a>
+    <a class="button secondary" href="/history">返回历史</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% set active = "system" %}
+{% set page_title = "系统管理" %}
+
+{% block content %}
+<section class="grid grid-2">
+  <div class="card">
+    <h2>用户管理</h2>
+    <form method="post" action="/system/users" class="inline-form">
+      <div class="grid grid-4 compact-grid">
+        <div>
+          <label>用户名</label>
+          <input name="username" required>
+        </div>
+        <div>
+          <label>显示名</label>
+          <input name="display_name" required>
+        </div>
+        <div>
+          <label>密码</label>
+          <input name="password" value="123456" required>
+        </div>
+        <div>
+          <label>角色</label>
+          <select name="role">
+            <option value="user">普通用户</option>
+            <option value="kb_admin">知识库管理员</option>
+            <option value="sys_admin">系统管理员</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button type="submit">新增账号</button></div>
+    </form>
+    <table>
+      <thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for item in users %}
+        <tr>
+          <td>{{ item.username }}</td>
+          <td>{{ item.display_name }}</td>
+          <td>{{ item.role }}</td>
+          <td>{{ item.status }}</td>
+          <td>
+            <div class="actions table-actions">
+              <form method="post" action="/system/users/{{ item.id }}/toggle"><button class="secondary" type="submit">启用/停用</button></form>
+              <form method="post" action="/system/users/{{ item.id }}/password">
+                <input class="small-input" name="password" value="123456" required>
+                <button class="secondary" type="submit">重置密码</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2 style="margin-top: 28px;">模型与检索配置</h2>
+    <form method="post" action="/system/configs">
+      <div class="grid grid-2 compact-grid">
+        <div>
+          <label>对话模型</label>
+          <input name="chat_model" value="{{ config_map.chat_model.value if config_map.chat_model else 'qwen-plus' }}" required>
+        </div>
+        <div>
+          <label>向量模型</label>
+          <input name="embedding_model" value="{{ config_map.embedding_model.value if config_map.embedding_model else 'text-embedding-v4' }}" required>
+        </div>
+        <div>
+          <label>Top-K</label>
+          <input name="top_k" type="number" min="1" max="20" value="{{ config_map.top_k.value if config_map.top_k else '6' }}" required>
+        </div>
+        <div>
+          <label>关键词权重</label>
+          <input name="keyword_weight" type="number" min="0" max="1" step="0.05" value="{{ config_map.keyword_weight.value if config_map.keyword_weight else '0.4' }}" required>
+        </div>
+        <div>
+          <label>向量权重</label>
+          <input name="vector_weight" type="number" min="0" max="1" step="0.05" value="{{ config_map.vector_weight.value if config_map.vector_weight else '0.6' }}" required>
+        </div>
+      </div>
+      <div class="actions"><button type="submit">保存配置</button></div>
+    </form>
+    <table>
+      {% for item in configs %}
+      <tr><th>{{ item.key }}</th><td>{{ item.value }}</td><td class="muted">{{ item.description }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="card">
+    <h2>推理质量指标</h2>
+    <table>
+      <tr><th>已评估报告</th><td>{{ quality_metrics.sample_size }}</td></tr>
+      <tr><th>法条/案号引用准确率</th><td>{{ quality_metrics.citation_accuracy if quality_metrics.citation_accuracy is not none else "暂无可核验引用" }}{% if quality_metrics.citation_accuracy is not none %}%{% endif %} <span class="muted">目标 {{ quality_metrics.targets.citation_accuracy }}</span></td></tr>
+      <tr><th>法条/案号编造率</th><td>{{ quality_metrics.hallucination_rate if quality_metrics.hallucination_rate is not none else "暂无可核验引用" }}{% if quality_metrics.hallucination_rate is not none %}%{% endif %} <span class="muted">目标 {{ quality_metrics.targets.hallucination_rate }}</span></td></tr>
+      <tr><th>平均 Recall@5</th><td>{{ quality_metrics.average_recall_at_5 if quality_metrics.average_recall_at_5 is not none else "暂无类案评估" }} <span class="muted">{{ quality_metrics.targets.recall_at_5 }}</span></td></tr>
+    </table>
+    <h2>反馈统计</h2>
+    <table>
+      <thead><tr><th>用户</th><th>任务</th><th>评价</th><th>原因</th></tr></thead>
+      <tbody>
+        {% for item in feedbacks %}
+        <tr><td>{{ item.username }}</td><td>{{ item.title }}</td><td>{{ item.rating }}</td><td>{{ item.reason }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">暂无反馈。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h2 style="margin-top: 28px;">审计日志</h2>
+    <table>
+      <thead><tr><th>时间</th><th>用户</th><th>动作</th><th>结果</th><th>request_id</th></tr></thead>
+      <tbody>
+        {% for item in audits %}
+        <tr><td>{{ item.created_at }}</td><td>{{ item.username or "-" }}</td><td>{{ item.action }}</td><td>{{ item.result }}</td><td><span class="muted">{{ item.request_id or "-" }}</span></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

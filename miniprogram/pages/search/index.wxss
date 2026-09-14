@@ -1,0 +1,148 @@
+.assistant-intro {
+  margin: 8rpx 0 26rpx;
+}
+
+.assistant-kicker {
+  display: block;
+  margin-bottom: 8rpx;
+  color: #155eef;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.chat-list {
+  min-height: 440rpx;
+}
+
+.chat-row {
+  display: flex;
+  margin-bottom: 24rpx;
+}
+
+.chat-row-user {
+  flex-direction: row-reverse;
+}
+
+.chat-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 16rpx;
+  border-radius: 10rpx;
+  background: #dbeafe;
+  color: #175cd3;
+  font-size: 27rpx;
+  font-weight: 700;
+  line-height: 60rpx;
+  text-align: center;
+}
+
+.chat-row-user .chat-avatar {
+  background: #dcfae6;
+  color: #067647;
+  margin-right: 0;
+  margin-left: 16rpx;
+}
+
+.chat-bubble {
+  width: 620rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e4e7ec;
+  border-radius: 10rpx;
+  background: #ffffff;
+}
+
+.chat-bubble-user {
+  border-color: #b2ddff;
+  background: #eff8ff;
+}
+
+.chat-name {
+  display: block;
+  color: #344054;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.chat-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #344054;
+  font-size: 27rpx;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.suggestion-scroll {
+  margin: 4rpx 0 20rpx;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.suggestion-row {
+  display: block;
+}
+
+.suggestion-btn {
+  display: inline-block;
+  width: auto;
+  min-height: 62rpx;
+  margin-right: 12rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 8rpx;
+  background: #ffffff;
+  color: #344054;
+  font-size: 23rpx;
+  line-height: 62rpx;
+  white-space: nowrap;
+}
+
+.assistant-composer {
+  padding-top: 20rpx;
+  border-top: 1rpx solid #e4e7ec;
+}
+
+.assistant-input {
+  width: 100%;
+  min-height: 150rpx;
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+  color: #344054;
+  font-size: 28rpx;
+  line-height: 1.55;
+}
+
+.assistant-note {
+  display: block;
+  margin-top: 14rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.55;
+}
+
+.source-panel {
+  margin-top: 28rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid #e4e7ec;
+}
+
+.source-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eaecf0;
+}
+
+.item-text {
+  margin-top: 12rpx;
+}
+
+.assistant-warning {
+  display: block;
+  margin-top: 14rpx;
+  color: #b54708;
+  font-size: 24rpx;
+  line-height: 1.55;
+}

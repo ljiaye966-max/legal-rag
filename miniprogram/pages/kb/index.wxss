@@ -1,0 +1,7 @@
+.subtitle {
+  line-height: 1.6;
+}
+
+.wrap-row button[size="mini"] {
+  width: auto;
+}

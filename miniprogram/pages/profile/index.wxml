@@ -1,0 +1,21 @@
+<view class="page">
+  <view class="card" wx:if="{{auth}}">
+    <text class="title">{{auth.display_name || auth.username}}</text>
+    <text class="subtitle">账号：{{auth.username}}</text>
+    <text class="badge">{{auth.role}}</text>
+  </view>
+
+  <view class="card" wx:if="{{canManageKnowledge}}">
+    <text class="section-title">管理功能</text>
+    <button class="secondary-btn" bindtap="goKnowledgeBase">知识库管理</button>
+    <view style="height: 16rpx;"></view>
+    <button wx:if="{{canManageSystem}}" class="secondary-btn" bindtap="goSystem">系统参数配置</button>
+  </view>
+
+  <view class="card">
+    <text class="section-title">说明</text>
+    <text class="item-text">本系统基于本地法律知识库进行检索和辅助分析，结果仅供教学和辅助参考，不构成法律意见。</text>
+  </view>
+
+  <button class="danger-btn" bindtap="logout">退出登录</button>
+</view>

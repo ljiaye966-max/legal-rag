@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="card" wx:if="{{health}}">
+    <text class="title">系统状态</text>
+    <text class="item-text">数据库：{{health.database}} · Chroma：{{health.chroma}}</text>
+    <text class="item-text">文档 {{health.documents}} · 分块 {{health.chunks}} · 向量 {{health.chroma_vectors}}</text>
+  </view>
+  <view class="card" wx:if="{{metrics}}">
+    <text class="title">推理质量指标</text>
+    <text class="item-text">已评估报告：{{metrics.sample_size}}</text>
+    <text class="item-text">法条/案号引用准确率：{{metrics.citation_accuracy === null ? '暂无可核验引用' : metrics.citation_accuracy + '%'}} · 目标 {{metrics.targets.citation_accuracy}}</text>
+    <text class="item-text">法条/案号编造率：{{metrics.hallucination_rate === null ? '暂无可核验引用' : metrics.hallucination_rate + '%'}} · 目标 {{metrics.targets.hallucination_rate}}</text>
+    <text class="item-text">平均 Recall@5：{{metrics.average_recall_at_5 === null ? '暂无类案评估' : metrics.average_recall_at_5}}</text>
+  </view>
+  <view class="card">
+    <text class="title">RAG 参数配置</text>
+    <view wx:for="{{configs}}" wx:key="key">
+      <text class="label">{{item.description || item.key}}</text>
+      <input class="input" value="{{item.value}}" data-index="{{index}}" bindinput="bindConfig" />
+    </view>
+    <button class="primary-btn" loading="{{saving}}" bindtap="save">保存配置</button>
+  </view>
+</view>

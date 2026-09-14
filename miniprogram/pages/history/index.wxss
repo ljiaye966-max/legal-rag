@@ -1,0 +1,10 @@
+.danger-btn {
+  display: inline-block;
+  width: auto;
+  min-width: 132rpx;
+  min-height: 64rpx;
+  margin-top: 14rpx;
+  padding: 0 20rpx;
+  line-height: 64rpx;
+  font-size: 24rpx;
+}

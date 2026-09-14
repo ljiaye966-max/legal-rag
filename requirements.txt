@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+langchain
+langchain-community
+dashscope
+python-dotenv
+pymysql
+pypdf
+chromadb
+alibabacloud_dypnsapi20170525

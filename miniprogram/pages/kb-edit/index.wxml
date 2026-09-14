@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="card">
+    <text class="title">{{docId ? '编辑知识库文档' : '新增知识库文档'}}</text>
+    <text class="label">标题</text>
+    <input class="input" value="{{title}}" data-field="title" bindinput="bindText" placeholder="例如：买卖合同纠纷案例" />
+    <text class="label">文档类型</text>
+    <picker range="{{types}}" value="{{typeIndex}}" data-field="typeIndex" bindchange="bindPicker">
+      <view class="picker-field">{{documentType}}</view>
+    </picker>
+    <text class="label">案由</text>
+    <picker range="{{causes}}" value="{{causeIndex}}" data-field="causeIndex" bindchange="bindPicker">
+      <view class="picker-field">{{caseCause}}</view>
+    </picker>
+    <text class="label">地域</text>
+    <input class="input" value="{{region}}" data-field="region" bindinput="bindText" placeholder="全国" />
+    <text class="label">年份</text>
+    <input class="input" value="{{year}}" type="number" data-field="year" bindinput="bindText" placeholder="2026" />
+    <text class="label">正文</text>
+    <textarea class="textarea" value="{{content}}" maxlength="-1" data-field="content" bindinput="bindText" placeholder="粘贴案例或法规正文。" />
+    <button class="primary-btn" loading="{{saving}}" bindtap="save">保存并建立向量索引</button>
+  </view>
+</view>

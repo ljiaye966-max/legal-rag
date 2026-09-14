@@ -1,0 +1,7 @@
+.item-text {
+  margin-top: 10rpx;
+}
+
+.label {
+  margin-top: 18rpx;
+}

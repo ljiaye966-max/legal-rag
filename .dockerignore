@@ -1,0 +1,17 @@
+.git
+.idea
+.env
+__pycache__
+*.py[cod]
+.pytest_cache
+tests
+storage
+uploads
+exports
+runtime
+miniprogram
+*.md
+*.bat
+database_schema.sql
+nginx
+deploy.sh

@@ -1,0 +1,16 @@
+<view class="page">
+  <view class="card" wx:if="{{document}}">
+    <text class="title">{{document.title}}</text>
+    <text class="muted">{{document.document_type}} · {{document.case_cause}} · {{document.region}} · {{document.year}}</text>
+    <view class="divider"></view>
+    <text class="item-text">来源：{{document.source_name}}</text>
+  </view>
+  <view class="card">
+    <text class="section-title">正文片段</text>
+    <view wx:for="{{chunks}}" wx:key="id" class="list-item">
+      <text class="badge">片段 {{item.chunk_no}}</text>
+      <text class="item-text">{{item.content}}</text>
+    </view>
+    <view wx:if="{{!chunks.length}}" class="empty">未读取到正文片段。</view>
+  </view>
+</view>

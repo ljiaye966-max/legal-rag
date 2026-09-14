@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set active = "kb" %}
+{% set page_title = "编辑知识库" %}
+
+{% block content %}
+<section class="card">
+  <h2>编辑知识库</h2>
+  <form method="post" action="/kb/{{ doc.id }}/update">
+    <label>标题</label>
+    <input name="title" value="{{ doc.title }}" required>
+    <label>文档类型</label>
+    <select name="document_type">
+      {% for item in ["case", "statute", "qa"] %}
+      <option value="{{ item }}" {{ "selected" if doc.document_type == item else "" }}>{{ item }}</option>
+      {% endfor %}
+    </select>
+    <label>案由</label>
+    <input name="case_cause" value="{{ doc.case_cause or '' }}">
+    <label>地域</label>
+    <input name="region" value="{{ doc.region or '' }}">
+    <label>年份</label>
+    <input name="year" value="{{ doc.year or 2026 }}">
+    <label>时效状态</label>
+    <select name="validity_status">
+      <option value="active" {{ "selected" if doc.validity_status == "active" else "" }}>现行有效</option>
+      <option value="revised" {{ "selected" if doc.validity_status == "revised" else "" }}>已修订</option>
+      <option value="repealed" {{ "selected" if doc.validity_status == "repealed" else "" }}>已废止</option>
+    </select>
+    <label>修订/废止日期</label>
+    <input name="validity_date" value="{{ doc.validity_date or '' }}" placeholder="例如：2021-01-01">
+    <label>时效提示</label>
+    <input name="validity_note" value="{{ doc.validity_note or '' }}" placeholder="例如：该条已于 2021-01-01 废止">
+    <label>正文</label>
+    <textarea name="content" required>{{ content }}</textarea>
+    <div class="actions">
+      <button type="submit">保存修改</button>
+      <a class="button secondary" href="/kb">返回</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

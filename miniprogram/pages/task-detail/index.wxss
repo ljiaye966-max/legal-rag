@@ -1,0 +1,60 @@
+.warning-box {
+  margin: 10rpx 0 20rpx;
+  padding: 18rpx;
+  border-radius: 10rpx;
+  background: #fffaeb;
+}
+
+.result-actions {
+  margin-top: 26rpx;
+}
+
+.audit-summary {
+  margin: 0 0 18rpx;
+  padding: 16rpx 0;
+  border-top: 1rpx solid #eaecf0;
+  border-bottom: 1rpx solid #eaecf0;
+}
+
+.audit-title,
+.audit-value,
+.chain-title,
+.metric-line {
+  display: block;
+}
+
+.audit-title,
+.chain-title {
+  color: #344054;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.audit-value,
+.metric-line {
+  margin-top: 8rpx;
+  color: #155eef;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.chain-step {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eaecf0;
+}
+
+.chain-step:last-of-type {
+  border-bottom: 0;
+}
+
+.chain-sources {
+  margin-top: 10rpx;
+}
+
+.chain-source {
+  display: block;
+  margin-top: 6rpx;
+  color: #175cd3;
+  font-size: 23rpx;
+  line-height: 1.5;
+}

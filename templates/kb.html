@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% set active = "kb" %}
+{% set page_title = "知识库管理" %}
+
+{% block content %}
+<section class="grid grid-2">
+  <div class="card">
+    <h2>导入知识库</h2>
+    <form method="post" action="/kb/import" enctype="multipart/form-data">
+      <label>标题</label>
+      <input name="title" required placeholder="例如：服务合同违约模拟案例">
+      <label>文档类型</label>
+      <select name="document_type">
+        <option value="case">case</option>
+        <option value="statute">statute</option>
+        <option value="qa">qa</option>
+      </select>
+      <label>案由</label>
+      <input name="case_cause" value="合同纠纷">
+      <label>地域</label>
+      <input name="region" value="全国">
+      <label>年份</label>
+      <input name="year" value="2026">
+      <label>时效状态</label>
+      <select name="validity_status">
+        <option value="active">现行有效</option>
+        <option value="revised">已修订</option>
+        <option value="repealed">已废止</option>
+      </select>
+      <label>修订/废止日期</label>
+      <input name="validity_date" placeholder="例如：2021-01-01">
+      <label>时效提示</label>
+      <input name="validity_note" placeholder="例如：该条已于 2021-01-01 废止">
+      <label>上传文件</label>
+      <input type="file" name="file" accept=".txt,.pdf,.csv,.json">
+      <label>正文，也可以直接粘贴文本</label>
+      <textarea name="content" placeholder="如果上传了文件，这里可以不填；如果不上传文件，请在这里粘贴知识库内容。"></textarea>
+      <div class="actions"><button type="submit">导入并发布</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>知识库列表</h2>
+    <table>
+      <thead><tr><th>标题</th><th>类型</th><th>时效</th><th>状态</th><th>块数</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for item in docs %}
+        <tr>
+          <td>{{ item.title }}</td>
+          <td>{{ item.document_type }}</td>
+          <td>{{ item.validity_status }}{% if item.validity_date %}<br><span class="muted">{{ item.validity_date }}</span>{% endif %}</td>
+          <td><span class="badge {{ 'green' if item.status == 'published' else 'red' }}">{{ item.status }}</span></td>
+          <td>{{ item.chunk_count }}</td>
+          <td>
+            <div class="actions table-actions">
+              <a class="button secondary" href="/kb/{{ item.id }}/edit">编辑</a>
+              <form method="post" action="/kb/{{ item.id }}/toggle"><button class="secondary" type="submit">发布/下线</button></form>
+              <form method="post" action="/kb/{{ item.id }}/delete" onsubmit="return confirm('确认删除这条知识库吗？')"><button class="danger" type="submit">删除</button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" style="margin-top: 22px;">
+  <h2>最近导入任务</h2>
+  <table>
+    <thead><tr><th>文件</th><th>状态</th><th>阶段</th><th>块数</th><th>哈希</th><th>错误摘要</th><th>时间</th></tr></thead>
+    <tbody>
+      {% for job in import_jobs %}
+      <tr>
+        <td>{{ job.file_name }}<br><span class="muted">{{ job.username or "-" }}</span></td>
+        <td><span class="badge {{ 'green' if job.status == 'success' else ('amber' if job.status == 'skipped' else ('red' if job.status == 'failed' else '')) }}">{{ job.status }}</span></td>
+        <td>{{ job.stage }}</td>
+        <td>{{ job.total_chunks }}</td>
+        <td><span class="muted">{{ job.file_hash[:12] if job.file_hash else "-" }}</span></td>
+        <td>{{ job.error_summary or "-" }}</td>
+        <td>{{ job.updated_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="muted">暂无导入任务。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

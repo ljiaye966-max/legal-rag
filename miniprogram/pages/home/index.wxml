@@ -1,0 +1,40 @@
+<view class="page">
+  <view class="card">
+    <text class="title">工作台</text>
+    <text class="subtitle">先和智能小助手梳理问题，或直接发起案例推理。</text>
+    <button class="primary-btn" bindtap="goAssistant">咨询智能小助手</button>
+    <view style="height: 16rpx;"></view>
+    <button class="secondary-btn" bindtap="goCaseCreate">新建案例推理</button>
+  </view>
+
+  <view class="grid" wx:if="{{health}}">
+    <view class="stat">
+      <text class="stat-value">{{health.documents}}</text>
+      <text class="stat-label">知识库文档</text>
+    </view>
+    <view class="stat">
+      <text class="stat-value">{{health.chunks}}</text>
+      <text class="stat-label">文本分块</text>
+    </view>
+    <view class="stat">
+      <text class="stat-value">{{health.chroma_vectors}}</text>
+      <text class="stat-label">Chroma 向量</text>
+    </view>
+    <view class="stat">
+      <text class="stat-value">{{tasks.length}}</text>
+      <text class="stat-label">最近任务</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="section-title">最近任务</text>
+    <view wx:for="{{tasks}}" wx:key="id" class="list-item" data-id="{{item.id}}" bindtap="goTask">
+      <view class="row">
+        <text class="item-title">{{item.title}}</text>
+        <text class="badge">{{item.status}}</text>
+      </view>
+      <text class="muted">{{item.updated_at}}</text>
+    </view>
+    <view wx:if="{{!tasks.length}}" class="empty">暂无推理任务，先新建一个案例吧。</view>
+  </view>
+</view>

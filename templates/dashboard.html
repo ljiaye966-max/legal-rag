@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set active = "dashboard" %}
+{% set page_title = "工作台" %}
+
+{% block content %}
+<section class="grid grid-4">
+  <div class="card"><div class="muted">推理任务</div><div class="stat-number">{{ stats.tasks }}</div></div>
+  <div class="card"><div class="muted">知识库文档</div><div class="stat-number">{{ stats.docs }}</div></div>
+  <div class="card"><div class="muted">文本块</div><div class="stat-number">{{ stats.chunks }}</div></div>
+  <div class="card"><div class="muted">反馈数量</div><div class="stat-number">{{ stats.feedback }}</div></div>
+</section>
+
+<section class="grid grid-2" style="margin-top: 22px;">
+  <div class="card">
+    <h2>最近任务</h2>
+    <table>
+      <thead><tr><th>标题</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for item in recent %}
+        <tr>
+          <td>{{ item.title }}</td>
+          <td><span class="badge green">{{ item.status }}</span></td>
+          <td>{{ item.updated_at }}</td>
+          <td><a href="/tasks/{{ item.id }}/result">查看</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">暂无任务，先创建一个案例推理。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="actions">
+      <a class="button" href="/cases/new">新建案例推理</a>
+      <a class="button secondary" href="/history">查看历史</a>
+    </div>
+  </div>
+  <div class="card">
+    <h2>演示知识库范围</h2>
+    <p class="muted">当前第一版覆盖合同纠纷、民间借贷、劳动争议、交通事故、婚姻家事和法规条文。</p>
+    <p>推荐演示问题：</p>
+    <ul>
+      <li>买卖合同尾款一直不付怎么办？</li>
+      <li>借条没有写利息还能主张利息吗？</li>
+      <li>公司以绩效不达标辞退员工是否合法？</li>
+      <li>交通事故医疗费和误工费如何主张？</li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set active = "search" %}
+{% set page_title = "文档详情" %}
+
+{% block content %}
+<section class="card">
+  <div class="detail-heading">
+    <div>
+      <h2>{{ doc.title }}</h2>
+      <p class="muted">{{ doc.source_name or "manual_input" }}</p>
+    </div>
+    <a class="button secondary" href="/search">返回检索</a>
+  </div>
+  <div class="detail-meta">
+    <span class="badge">{{ doc.document_type }}</span>
+    <span>案由：{{ doc.case_cause or "未填写" }}</span>
+    <span>地域：{{ doc.region or "未填写" }}</span>
+    <span>年份：{{ doc.year or "未填写" }}</span>
+    <span>状态：{{ doc.status }}</span>
+    <span>被引用：{{ citation_count }} 次</span>
+  </div>
+</section>
+
+<section class="card" style="margin-top: 22px;">
+  <h2>正文片段</h2>
+  <div class="chunk-list">
+    {% for chunk in chunks %}
+    <article class="chunk-item" id="chunk-{{ chunk.id }}">
+      <div class="muted">片段 {{ chunk.chunk_no }}{% if chunk.section_name %} · {{ chunk.section_name }}{% endif %}</div>
+      <p>{{ chunk.content }}</p>
+    </article>
+    {% else %}
+    <p class="muted">该文档暂无正文片段。</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+<view class="page">
+  <view class="card">
+    <view class="row">
+      <text class="title">历史报告</text>
+      <button size="mini" class="secondary-btn" loading="{{loading}}" bindtap="loadTasks">刷新</button>
+    </view>
+    <view wx:for="{{tasks}}" wx:key="id" class="list-item">
+      <view class="row" data-id="{{item.id}}" bindtap="goTask">
+        <view>
+          <text class="item-title">{{item.title}}</text>
+          <text class="muted">{{item.updated_at}}</text>
+        </view>
+        <text class="badge">{{item.status}}</text>
+      </view>
+      <button size="mini" class="danger-btn" data-id="{{item.id}}" bindtap="deleteTask">删除</button>
+    </view>
+    <view wx:if="{{!tasks.length && !loading}}" class="empty">暂无历史任务。</view>
+  </view>
+</view>

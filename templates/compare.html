@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set active = "compare" %}
+{% set page_title = "类案对比" %}
+
+{% block content %}
+<section class="card">
+  <h2>类案选择</h2>
+  {% if task %}
+  <p class="muted">当前任务：{{ task.title }}</p>
+  {% endif %}
+  <form method="get" action="/compare">
+    {% if task_id %}<input type="hidden" name="task_id" value="{{ task_id }}">{% endif %}
+    <div class="grid grid-2">
+      {% for item in candidate_cases %}
+      <label class="option-row">
+        <input style="width:auto;" type="checkbox" name="case_choice" value="{{ item.document_id }}" {{ "checked" if item.document_id in selected_ids else "" }}>
+        <span>{{ item.title }}<br><span class="muted">{{ item.case_cause }} · {{ item.region }} · {{ item.year }} · 相关度 {{ item.relevance_score }}</span></span>
+      </label>
+      {% endfor %}
+    </div>
+    <input type="hidden" id="case_ids_value" name="case_ids" value="{{ selected_ids | join(',') }}">
+    <div class="actions"><button type="submit">生成对比</button></div>
+  </form>
+</section>
+
+<section class="card" style="margin-top: 22px;">
+  <h2>对比结果</h2>
+  <table>
+    <thead><tr><th>案例</th><th>事实</th><th>争点</th><th>法律依据/说理</th><th>裁判结果</th><th>差异点</th></tr></thead>
+    <tbody>
+      {% for item in cases %}
+      <tr>
+        <td><a href="/documents/{{ item.id }}">{{ item.title }}</a><br><span class="muted">{{ item.region }} · {{ item.year }}</span></td>
+        <td>{{ item.facts }}</td>
+        <td>{{ item.focus }}</td>
+        <td>{{ item.law }}</td>
+        <td>{{ item.result }}</td>
+        <td>{{ item.difference }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">暂无可对比案例。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script>
+  const form = document.querySelector('form[action="/compare"]');
+  const hidden = document.getElementById("case_ids_value");
+  form?.addEventListener("submit", (event) => {
+    const values = Array.from(form.querySelectorAll('input[name="case_choice"]:checked')).map((item) => item.value);
+    if (values.length < 2 || values.length > 5) {
+      event.preventDefault();
+      alert("请选择 2 到 5 个案例进行对比。");
+      return;
+    }
+    hidden.value = values.join(",");
+  });
+</script>
+{% endblock %}

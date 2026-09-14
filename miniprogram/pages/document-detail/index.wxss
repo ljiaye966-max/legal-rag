@@ -1,0 +1,4 @@
+.item-text {
+  margin-top: 14rpx;
+  white-space: pre-wrap;
+}

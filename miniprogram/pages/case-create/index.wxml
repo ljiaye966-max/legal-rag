@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="card">
+    <text class="title">新建案例推理</text>
+    <text class="subtitle">输入案情后，系统会从法律知识库中召回证据并生成辅助分析。</text>
+    <text class="label">案情全文</text>
+    <textarea class="textarea" value="{{caseText}}" bindinput="bindText" maxlength="-1" placeholder="请描述案件事实、诉求、证据和争议经过。" />
+
+    <text class="label">检索案由</text>
+    <picker range="{{causes}}" value="{{causeIndex}}" data-field="causeIndex" bindchange="bindPicker">
+      <view class="picker-field">{{causes[causeIndex]}}</view>
+    </picker>
+    <text class="label">检索地域</text>
+    <picker range="{{regions}}" value="{{regionIndex}}" data-field="regionIndex" bindchange="bindPicker">
+      <view class="picker-field">{{regions[regionIndex]}}</view>
+    </picker>
+    <text class="label">检索年份</text>
+    <picker range="{{years}}" value="{{yearIndex}}" data-field="yearIndex" bindchange="bindPicker">
+      <view class="picker-field">{{years[yearIndex]}}</view>
+    </picker>
+    <button class="primary-btn" loading="{{submitting}}" bindtap="submit">开始 RAG 推理</button>
+  </view>
+  <view class="card">
+    <text class="muted">系统结果仅用于教学辅助分析，不构成正式法律意见或裁判结论。</text>
+  </view>
+</view>

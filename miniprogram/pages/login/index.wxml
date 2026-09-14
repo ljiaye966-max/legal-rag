@@ -1,0 +1,38 @@
+<view class="page login-page">
+  <view class="brand">
+    <text class="brand-title">AI 法律案例推理</text>
+    <text class="brand-subtitle">基于本地知识库与 RAG 的法律辅助分析</text>
+  </view>
+  <view class="card">
+    <view class="auth-mode">
+      <button size="mini" class="{{mode === 'login' ? 'primary-btn' : 'secondary-btn'}}" data-mode="login" bindtap="switchMode">登录</button>
+      <button size="mini" class="{{mode === 'register' ? 'primary-btn' : 'secondary-btn'}}" data-mode="register" bindtap="switchMode">手机号注册</button>
+    </view>
+    <text class="title">{{mode === 'login' ? '账号登录' : '手机号注册'}}</text>
+    <block wx:if="{{mode === 'login'}}">
+      <text class="label">用户名或手机号</text>
+      <input class="input" value="{{account}}" data-field="account" bindinput="bindInput" placeholder="请输入用户名或手机号" />
+    </block>
+    <block wx:else>
+      <text class="label">手机号</text>
+      <input class="input" value="{{phone}}" data-field="phone" type="number" maxlength="11" bindinput="bindInput" placeholder="请输入 11 位手机号" />
+      <text class="label">验证码</text>
+      <view class="code-row">
+        <input class="input code-input" value="{{verificationCode}}" data-field="verificationCode" type="number" maxlength="6" bindinput="bindInput" placeholder="6 位验证码" />
+        <button class="secondary-btn code-btn" disabled="{{codeSeconds > 0}}" bindtap="sendCode">{{codeSeconds > 0 ? codeSeconds + '秒后重试' : '获取验证码'}}</button>
+      </view>
+      <text wx:if="{{demoCode}}" class="demo-code">本地演示验证码：{{demoCode}}</text>
+      <text class="label">显示名称（可选）</text>
+      <input class="input" value="{{displayName}}" data-field="displayName" maxlength="80" bindinput="bindInput" placeholder="例如：张同学" />
+    </block>
+    <text class="label">密码</text>
+    <input class="input" value="{{password}}" password data-field="password" bindinput="bindInput" placeholder="{{mode === 'login' ? '请输入密码' : '至少 6 位'}}" />
+    <button class="primary-btn" loading="{{loading}}" bindtap="submit">{{mode === 'login' ? '登录' : '注册并登录'}}</button>
+  </view>
+  <view class="hint">
+    <text wx:if="{{mode === 'login'}}">普通用户：user01 / 123456</text>
+    <text wx:else>请输入手机号并获取验证码后完成注册。</text>
+    <text>知识库管理员：kb_admin / 123456</text>
+    <text>系统管理员：admin / 123456</text>
+  </view>
+</view>

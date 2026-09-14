@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 - AI 法律案例推理系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <main class="login-page">
+      <section class="login-hero">
+        <h1>基于 LLM 和 RAG 的<br>AI 法律案例推理系统</h1>
+        <p>面向课程设计场景的法律案例辅助分析工具，支持类案检索、法规引用、推理报告和来源溯源。</p>
+        <span class="badge amber">仅供教学辅助分析</span>
+        <span class="badge red">不构成法律意见</span>
+      </section>
+      <section class="card">
+        <h2>账号登录</h2>
+        <p class="muted">支持用户名或已注册手机号登录。</p>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form method="post" action="/login">
+          <label>用户名或手机号</label>
+          <input name="account" placeholder="user01 / 13800138000" required>
+          <label>密码</label>
+          <input name="password" type="password" placeholder="默认 123456" required>
+          <div class="actions">
+            <button type="submit">登录系统</button>
+            <a class="button secondary" href="/register">手机号注册</a>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

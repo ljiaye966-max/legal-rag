@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "AI 法律案例推理系统" }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">法析 RAG</div>
+        <div class="brand-sub">AI 法律案例推理系统</div>
+        <nav class="nav">
+          <a class="{{ 'active' if active == 'dashboard' else '' }}" href="/dashboard">工作台</a>
+          <a class="{{ 'active' if active == 'search' else '' }}" href="/search">智能小助手</a>
+          <a class="{{ 'active' if active == 'case' else '' }}" href="/cases/new">案情录入</a>
+          <a class="{{ 'active' if active == 'history' else '' }}" href="/history">历史报告</a>
+          <a class="{{ 'active' if active == 'compare' else '' }}" href="/compare">类案对比</a>
+          {% if user and user.role in ["kb_admin", "sys_admin"] %}
+          <a class="{{ 'active' if active == 'kb' else '' }}" href="/kb">知识库管理</a>
+          {% endif %}
+          {% if user and user.role == "sys_admin" %}
+          <a class="{{ 'active' if active == 'system' else '' }}" href="/system">系统管理</a>
+          {% endif %}
+        </nav>
+      </aside>
+      <section>
+        <header class="topbar">
+          <h1>{{ page_title }}</h1>
+          <div>
+            <span class="badge role">{{ user.display_name if user else "" }}</span>
+            <a href="/logout">退出</a>
+          </div>
+        </header>
+        <main class="main">
+          {% block content %}{% endblock %}
+        </main>
+      </section>
+    </div>
+  </body>
+</html>

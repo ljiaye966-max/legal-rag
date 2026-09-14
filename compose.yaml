@@ -1,0 +1,31 @@
+services:
+  legal-rag:
+    build:
+      context: .
+    container_name: legal-rag
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8008
+      RELOAD: "false"
+    expose:
+      - "8008"
+    volumes:
+      - ./runtime/storage:/app/storage
+      - ./runtime/uploads:/app/uploads
+      - ./runtime/exports:/app/exports
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: legal-rag-web
+    restart: unless-stopped
+    depends_on:
+      legal-rag:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro

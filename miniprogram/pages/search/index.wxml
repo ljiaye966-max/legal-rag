@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="assistant-intro">
+    <text class="assistant-kicker">基于知识库的法律辅助问答</text>
+    <text class="title">智能法律小助手</text>
+    <text class="subtitle">说说你的情况，我会检索当前知识库并标明可参考的材料。</text>
+  </view>
+
+  <view class="chat-list">
+    <view wx:for="{{messages}}" wx:key="id" class="chat-row {{item.role === 'user' ? 'chat-row-user' : ''}}">
+      <view class="chat-avatar">{{item.role === 'user' ? '我' : '法'}}</view>
+      <view class="chat-bubble {{item.role === 'user' ? 'chat-bubble-user' : ''}}">
+        <text class="chat-name">{{item.role === 'user' ? '我' : '法律小助手'}}</text>
+        <text class="chat-text">{{item.text}}</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view class="suggestion-scroll" scroll-x>
+    <view class="suggestion-row">
+      <button wx:for="{{suggestions}}" wx:key="*this" size="mini" class="suggestion-btn" data-question="{{item}}" bindtap="askSuggestion">{{item}}</button>
+    </view>
+  </scroll-view>
+
+  <view class="assistant-composer">
+    <textarea class="assistant-input" value="{{question}}" maxlength="3000" auto-height bindinput="bindQuestion" bindconfirm="submit" placeholder="输入案件情况、疑问或已有证据" />
+    <button class="primary-btn" loading="{{asking}}" disabled="{{asking}}" bindtap="submit">发送问题</button>
+    <text class="assistant-note">回答仅基于当前知识库，用于教学和辅助检索，不构成正式法律意见。</text>
+  </view>
+
+  <view class="source-panel" wx:if="{{sources.length || warnings.length}}">
+    <text class="section-title">{{sources.length ? '参考依据' : '检索提示'}}</text>
+    <view wx:for="{{sources}}" wx:key="document_id" class="source-item" data-id="{{item.document_id}}" bindtap="goDocument">
+      <view class="row">
+        <text class="item-title">{{item.title}}</text>
+        <text class="badge">{{item.relevance_score}}</text>
+      </view>
+      <text class="muted">{{item.source_name || '知识库材料'}} · {{item.document_type}}</text>
+      <text class="item-text">{{item.snippet}}</text>
+      <text wx:if="{{item.validity_status !== 'active'}}" class="assistant-warning">{{item.validity_note || ('该材料状态：' + item.validity_status + (item.validity_date ? '，日期：' + item.validity_date : ''))}}</text>
+    </view>
+    <text wx:for="{{warnings}}" wx:key="*this" class="assistant-warning">{{item}}</text>
+  </view>
+</view>

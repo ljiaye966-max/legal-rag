@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set active = "history" %}
+{% set page_title = "历史与报告" %}
+
+{% block content %}
+<section class="card">
+  <h2>历史任务</h2>
+  <form method="get" class="actions">
+    <input style="max-width: 320px;" name="q" value="{{ q }}" placeholder="搜索标题">
+    <select style="max-width: 180px;" name="status">
+      <option>全部</option>
+      <option value="draft" {{ 'selected' if status == 'draft' else '' }}>draft</option>
+      <option value="queued" {{ 'selected' if status == 'queued' else '' }}>queued</option>
+      <option value="running" {{ 'selected' if status == 'running' else '' }}>running</option>
+      <option value="retrieving" {{ 'selected' if status == 'retrieving' else '' }}>retrieving</option>
+      <option value="generating" {{ 'selected' if status == 'generating' else '' }}>generating</option>
+      <option value="validating" {{ 'selected' if status == 'validating' else '' }}>validating</option>
+      <option value="completed" {{ 'selected' if status == 'completed' else '' }}>completed</option>
+      <option value="failed" {{ 'selected' if status == 'failed' else '' }}>failed</option>
+    </select>
+    <button type="submit">筛选</button>
+  </form>
+  <table>
+    <thead><tr><th>标题</th><th>状态</th><th>创建时间</th><th>更新时间</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for item in tasks %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td><span class="badge green">{{ item.status }}</span></td>
+        <td>{{ item.created_at }}</td>
+        <td>{{ item.updated_at }}</td>
+        <td>
+          <a href="/tasks/{{ item.id }}/result">查看</a>
+          <a href="/tasks/{{ item.id }}/export">导出</a>
+          <form style="display:inline;" method="post" action="/tasks/{{ item.id }}/delete"><button class="danger" type="submit">删除</button></form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">暂无历史任务。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

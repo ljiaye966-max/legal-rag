@@ -1,0 +1,80 @@
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 40rpx;
+  padding-bottom: 72rpx;
+}
+
+.brand {
+  margin: 0 20rpx 48rpx;
+}
+
+.brand-title {
+  display: block;
+  color: #101828;
+  font-size: 54rpx;
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  display: block;
+  margin-top: 16rpx;
+  color: #667085;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.hint {
+  display: flex;
+  flex-direction: column;
+  padding: 4rpx 20rpx;
+  color: #667085;
+  font-size: 24rpx;
+}
+
+.hint text {
+  margin-bottom: 10rpx;
+}
+
+.auth-mode,
+.code-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.auth-mode {
+  margin-bottom: 28rpx;
+}
+
+.auth-mode button {
+  width: 50%;
+  min-height: 68rpx;
+  line-height: 68rpx;
+  font-size: 24rpx;
+}
+
+.code-row {
+  align-items: flex-start;
+}
+
+.code-input {
+  flex: 1;
+}
+
+.code-btn {
+  width: 220rpx;
+  min-height: 84rpx;
+  margin-top: 12rpx;
+  padding: 0 10rpx;
+  line-height: 84rpx;
+  font-size: 22rpx;
+}
+
+.demo-code {
+  display: block;
+  margin: -8rpx 0 18rpx;
+  color: #b54708;
+  font-size: 24rpx;
+}

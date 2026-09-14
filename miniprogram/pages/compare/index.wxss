@@ -1,0 +1,17 @@
+.choice {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eaecf0;
+}
+
+.choice checkbox {
+  margin-right: 14rpx;
+}
+
+.field-label {
+  display: block;
+  margin-top: 14rpx;
+  color: #344054;
+  font-size: 24rpx;
+  font-weight: 700;
+}

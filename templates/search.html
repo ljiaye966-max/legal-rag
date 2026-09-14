@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% set active = "search" %}
+{% set page_title = "智能法律小助手" %}
+
+{% block content %}
+<section class="assistant-shell" aria-label="智能法律小助手">
+  <div class="assistant-intro">
+    <div>
+      <p class="assistant-kicker">基于知识库的法律辅助问答</p>
+      <h2>有什么法律问题想一起梳理？</h2>
+      <p>描述你的情况、疑问或已有材料。小助手会从知识库中检索依据，并标明参考来源。</p>
+    </div>
+    <a class="button secondary" href="/cases/new">进入案情推理</a>
+  </div>
+
+  <div id="assistantMessages" class="assistant-messages" aria-live="polite">
+    <article class="assistant-message assistant-message-bot">
+      <div class="assistant-avatar" aria-hidden="true">法</div>
+      <div class="assistant-bubble">
+        <strong>法律小助手</strong>
+        <p>你好，我可以协助你初步梳理合同、借贷、劳动等问题，并从当前知识库中找到可供参考的材料。</p>
+      </div>
+    </article>
+  </div>
+
+  <div class="assistant-prompts" aria-label="常用问题">
+    <button type="button" data-question="对方收到货后拖欠尾款，我需要准备哪些证据？">拖欠尾款要准备什么证据？</button>
+    <button type="button" data-question="借条和转账记录都有，对方到期不还款怎么办？">借款到期不还怎么办？</button>
+    <button type="button" data-question="公司以绩效不达标为由辞退员工，是否合法？">绩效辞退是否合法？</button>
+  </div>
+
+  <form id="assistantForm" class="assistant-composer">
+    <label class="sr-only" for="assistantQuestion">请输入你的法律问题</label>
+    <textarea id="assistantQuestion" name="question" rows="3" maxlength="3000" placeholder="例如：合同约定验收后付款，但对方一直拖欠尾款，我有合同和签收记录，下一步该怎么做？" required></textarea>
+    <div class="assistant-composer-footer">
+      <details class="assistant-filters">
+        <summary>检索范围</summary>
+        <div class="assistant-filter-grid">
+          <label>案由
+            <select name="case_cause">
+              {% for item in ["全部", "合同纠纷", "民间借贷", "劳动争议", "交通事故", "婚姻家事"] %}
+              <option value="{{ item }}">{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>地域
+            <select name="region">
+              {% for item in ["全部", "全国", "江苏", "浙江", "广东", "四川", "山东"] %}
+              <option value="{{ item }}">{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>年份
+            <select name="year">
+              {% for item in ["全部", "2026", "2025", "2024", "2023", "2022", "2021", "2020"] %}
+              <option value="{{ item }}">{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>材料类型
+            <select name="document_type">
+              <option value="全部">全部</option>
+              <option value="case">案例</option>
+              <option value="statute">法规</option>
+              <option value="qa">问答</option>
+            </select>
+          </label>
+        </div>
+      </details>
+      <button id="assistantSubmit" type="submit">发送问题</button>
+    </div>
+    <p class="assistant-disclaimer">回答仅基于当前知识库，用于教学与辅助检索，不构成正式法律意见。</p>
+  </form>
+</section>
+
+<script>
+  const form = document.getElementById("assistantForm");
+  const questionInput = document.getElementById("assistantQuestion");
+  const messages = document.getElementById("assistantMessages");
+  const submitButton = document.getElementById("assistantSubmit");
+  const conversation = [];
+
+  function appendMessage(kind, content) {
+    const article = document.createElement("article");
+    article.className = `assistant-message assistant-message-${kind}`;
+    const avatar = document.createElement("div");
+    avatar.className = "assistant-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = kind === "bot" ? "法" : "我";
+    const bubble = document.createElement("div");
+    bubble.className = "assistant-bubble";
+    const label = document.createElement("strong");
+    label.textContent = kind === "bot" ? "法律小助手" : "我";
+    const text = document.createElement("p");
+    text.textContent = content;
+    bubble.append(label, text);
+    article.append(avatar, bubble);
+    messages.append(article);
+    article.scrollIntoView({ behavior: "smooth", block: "end" });
+    return article;
+  }
+
+  function appendSources(sources, warnings) {
+    if (!sources.length && !warnings.length) return;
+    const details = document.createElement("details");
+    details.className = "assistant-sources";
+    details.open = sources.length > 0;
+    const summary = document.createElement("summary");
+    summary.textContent = sources.length ? `参考依据（${sources.length}）` : "检索提示";
+    details.append(summary);
+    const sourceList = document.createElement("div");
+    sourceList.className = "assistant-source-list";
+    sources.forEach((source) => {
+      const item = document.createElement("a");
+      item.className = "assistant-source";
+      item.href = `/documents/${source.document_id}`;
+      const title = document.createElement("strong");
+      title.textContent = source.title;
+      const detail = document.createElement("span");
+      detail.textContent = `${source.source_name || "知识库材料"} · 相关度 ${source.relevance_score}`;
+      const snippet = document.createElement("p");
+      snippet.textContent = source.snippet;
+      item.append(title, detail, snippet);
+      sourceList.append(item);
+    });
+    warnings.forEach((warning) => {
+      const note = document.createElement("p");
+      note.className = "assistant-warning";
+      note.textContent = warning;
+      sourceList.append(note);
+    });
+    details.append(sourceList);
+    messages.append(details);
+  }
+
+  async function askAssistant(question) {
+    const userQuestion = question.trim();
+    if (!userQuestion) return;
+    appendMessage("user", userQuestion);
+    conversation.push({ role: "用户", content: userQuestion });
+    questionInput.value = "";
+    submitButton.disabled = true;
+    submitButton.textContent = "正在分析";
+    const loading = appendMessage("bot", "正在检索知识库并整理参考依据，请稍候。");
+    loading.classList.add("is-loading");
+
+    try {
+      const data = new FormData(form);
+      const request = {
+        question: userQuestion,
+        case_cause: data.get("case_cause"),
+        region: data.get("region"),
+        year: data.get("year"),
+        document_type: data.get("document_type"),
+        history: conversation.slice(-6),
+      };
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      const payload = await response.json();
+      loading.remove();
+      if (!response.ok || payload.code !== 0) {
+        throw new Error(payload.message || "暂时无法回答这个问题");
+      }
+      appendMessage("bot", payload.data.answer);
+      conversation.push({ role: "助手", content: payload.data.answer });
+      appendSources(payload.data.sources || [], payload.data.warnings || []);
+    } catch (error) {
+      loading.remove();
+      appendMessage("bot", error.message || "暂时无法连接小助手，请稍后再试。");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "发送问题";
+      questionInput.focus();
+    }
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    askAssistant(questionInput.value);
+  });
+
+  document.querySelectorAll("[data-question]").forEach((button) => {
+    button.addEventListener("click", () => askAssistant(button.dataset.question || ""));
+  });
+</script>
+{% endblock %}
