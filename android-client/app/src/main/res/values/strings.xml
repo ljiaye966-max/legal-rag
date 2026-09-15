@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI 法律案例推理系统</string>
+    <string name="refresh">刷新</string>
+    <string name="server_settings">服务器设置</string>
+
+    <string name="server_settings_subtitle">填写后端服务地址，用于连接 AI 法律案例推理系统。保存后自动生效。</string>
+    <string name="server_address_label">后端服务地址</string>
+    <string name="server_address_hint">例如：http://172.20.10.4:8001</string>
+    <string name="server_address_help">真机请填写电脑的局域网 IPv4 地址和端口；Android 模拟器请填写 http://10.0.2.2:8001。后端需启动并允许局域网访问。</string>
+    <string name="quick_fill">快速填入</string>
+    <string name="chip_emulator">Android 模拟器</string>
+    <string name="chip_lan">默认局域网地址</string>
+    <string name="save_and_connect">保存并连接</string>
+    <string name="cancel">取消</string>
+    <string name="invalid_server_address">请输入有效的服务器地址</string>
+    <string name="server_address_saved">服务器地址已保存</string>
+
+    <string name="connection_failed">无法连接后端服务</string>
+    <string name="connection_help">请确认电脑后端已启动，手机与电脑处于同一网络。\n可点击下方按钮重试，或修改服务器地址。</string>
+    <string name="retry">重试</string>
+</resources>

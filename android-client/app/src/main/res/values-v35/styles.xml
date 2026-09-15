@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 15 (targetSdk 35) 默认强制 edge-to-edge，会忽略 statusBarColor / navigationBarColor，
+         导致 WebView 内容被状态栏、刘海、手势导航条遮挡。这里显式退出该强制行为，
+         恢复为「纯色状态栏 + 内容从状态栏下方开始」的可靠布局，避免网页被裁切。 -->
+    <style name="AppTheme" parent="AppTheme.Base">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

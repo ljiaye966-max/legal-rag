@@ -163,3 +163,9 @@ docker compose up -d --build --remove-orphans
 docker compose ps
 curl http://127.0.0.1/api/health
 ```
+
+## Android 客户端
+
+安卓端位于 `android-client/`，是基于 WebView 的原生客户端，不修改后端接口和数据。使用 Android Studio 打开该目录，配置 JDK 17 和 Android SDK Platform 35 后即可运行。
+
+客户端支持在“Server Settings”中修改后端地址：模拟器使用 `http://10.0.2.2:8001`，真机使用电脑局域网地址。正式发布时应改用已配置合法域名的 HTTPS 地址。

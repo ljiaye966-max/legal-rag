@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 间距（8dp 网格） -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+    <dimen name="space_xxl">24dp</dimen>
+    <dimen name="space_xxxl">32dp</dimen>
+
+    <!-- 圆角 -->
+    <dimen name="radius_button">10dp</dimen>
+    <dimen name="radius_input">10dp</dimen>
+    <dimen name="radius_chip">20dp</dimen>
+    <dimen name="radius_card">12dp</dimen>
+    <dimen name="radius_small">2dp</dimen>
+
+    <!-- 组件尺寸与触控目标 -->
+    <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_min_width">180dp</dimen>
+    <dimen name="progress_height">3dp</dimen>
+
+    <!-- 文字（sp，随系统字体缩放） -->
+    <dimen name="text_title">22sp</dimen>
+    <dimen name="text_heading">20sp</dimen>
+    <dimen name="text_appbar_title">18sp</dimen>
+    <dimen name="text_subheading">16sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_secondary">14sp</dimen>
+    <dimen name="text_caption">13sp</dimen>
+</resources>
