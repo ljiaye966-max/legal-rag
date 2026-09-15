@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import html
 import csv
@@ -1809,8 +1810,40 @@ async def _import_single_kb_document(
         raise
 
 
+def _run_kb_batch_import(files: list[tuple[str, bytes]], fields: dict, user: dict) -> None:
+    """Process a submitted batch outside the request-response timeout window."""
+    async def process() -> None:
+        for file_name, data in files:
+            safe_name = Path(file_name).name
+            stem = Path(safe_name).stem or "未命名文档"
+            title = fields["title"].strip() or stem
+            if len(files) > 1 and fields["title"].strip():
+                title = f"{fields['title'].strip()} - {stem}"
+            upload = UploadFile(file=io.BytesIO(data), filename=safe_name)
+            try:
+                await _import_single_kb_document(
+                    title=title,
+                    document_type=fields["document_type"],
+                    case_cause=fields["case_cause"],
+                    region=fields["region"],
+                    year=fields["year"],
+                    validity_status=fields["validity_status"],
+                    validity_date=fields["validity_date"],
+                    validity_note=fields["validity_note"],
+                    content="",
+                    file=upload,
+                    user=user,
+                )
+            except Exception:
+                # Each file has its own import job and can fail independently.
+                continue
+
+    asyncio.run(process())
+
+
 @app.post("/kb/import")
 async def import_kb(
+    background_tasks: BackgroundTasks,
     title: str = Form(""),
     document_type: str = Form(...),
     case_cause: str = Form("合同纠纷"),
@@ -1844,26 +1877,22 @@ async def import_kb(
             raise HTTPException(status_code=400, detail=f"导入失败：{_error_detail(exc)}") from exc
         return RedirectResponse("/kb", status_code=303)
 
-    results = []
-    for upload in uploads:
-        stem = Path(upload.filename).stem or "未命名文档"
-        document_title = title.strip() or stem
-        if len(uploads) > 1 and title.strip():
-            document_title = f"{title.strip()} - {stem}"
-        try:
-            results.append(
-                await _import_single_kb_document(
-                    title=document_title, document_type=document_type, case_cause=case_cause,
-                    region=region, year=year, validity_status=validity_status,
-                    validity_date=validity_date, validity_note=validity_note, content="",
-                    file=upload, user=user,
-                )
-            )
-        except Exception:
-            # Each file owns its import job; continue so one bad file cannot block the batch.
-            results.append({"status": "failed", "source_name": upload.filename})
-    if not any(item["status"] in {"success", "skipped"} for item in results):
-        raise HTTPException(status_code=400, detail="批量导入失败，请查看最近导入任务中的错误摘要")
+    payloads = [(Path(upload.filename).name, await upload.read()) for upload in uploads]
+    background_tasks.add_task(
+        _run_kb_batch_import,
+        payloads,
+        {
+            "title": title,
+            "document_type": document_type,
+            "case_cause": case_cause,
+            "region": region,
+            "year": year,
+            "validity_status": validity_status,
+            "validity_date": validity_date,
+            "validity_note": validity_note,
+        },
+        user,
+    )
     return RedirectResponse("/kb", status_code=303)
 
 
