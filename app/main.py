@@ -218,6 +218,9 @@ def _error_detail(exc: Exception) -> str:
     return str(exc) or exc.__class__.__name__
 
 
+MAX_KB_IMPORT_FILES = 50
+
+
 PHONE_PATTERN = re.compile(r"^1[3-9]\d{9}$")
 
 
@@ -1702,20 +1705,21 @@ def kb_page(request: Request, user: dict = Depends(require_role("kb_admin", "sys
     return render(request, "kb.html", {"docs": docs, "import_jobs": import_jobs})
 
 
-@app.post("/kb/import")
-async def import_kb(
-    title: str = Form(...),
-    document_type: str = Form(...),
-    case_cause: str = Form("合同纠纷"),
-    region: str = Form("全国"),
-    year: int = Form(2026),
-    validity_status: str = Form("active"),
-    validity_date: str = Form(""),
-    validity_note: str = Form(""),
-    content: str = Form(""),
-    file: UploadFile | None = File(None),
-    user: dict = Depends(require_role("kb_admin", "sys_admin")),
-):
+async def _import_single_kb_document(
+    *,
+    title: str,
+    document_type: str,
+    case_cause: str,
+    region: str,
+    year: int,
+    validity_status: str,
+    validity_date: str,
+    validity_note: str,
+    content: str,
+    file: UploadFile | None,
+    user: dict,
+) -> dict:
+    """Import one document and keep its job state independent from other files."""
     source_name = "manual_input"
     stage = "received"
     job_id: int | None = None
@@ -1725,13 +1729,13 @@ async def import_kb(
         if file and file.filename:
             safe_name = Path(file.filename).name
             data = await file.read()
-            if not data:
-                raise HTTPException(status_code=400, detail="上传文件不能为空")
             source_name = safe_name
             file_hash = hashlib.sha256(data).hexdigest()
             job_id = db.create_import_job(source_name, file_hash, "uploaded", "running", user["id"])
+            if not data:
+                raise HTTPException(status_code=400, detail="上传文件不能为空")
             stage = "stored"
-            upload_path = UPLOAD_DIR / f"{int(db.now().replace('-', '').replace(':', '').replace(' ', ''))}-{safe_name}"
+            upload_path = UPLOAD_DIR / f"{uuid.uuid4().hex}-{safe_name}"
             upload_path.write_bytes(data)
             db.update_import_job(job_id, stage=stage)
             stage = "parsed"
@@ -1753,7 +1757,7 @@ async def import_kb(
             message = f"重复导入，已存在文档：{duplicate['title']}（ID {duplicate['id']}）"
             db.update_import_job(job_id, stage="duplicate", status="skipped", total_chunks=0, error_summary=message)
             db.audit(user["id"], "import_kb", "legal_document", duplicate["id"], "skipped")
-            return RedirectResponse("/kb", status_code=303)
+            return {"status": "skipped", "job_id": job_id, "document_id": duplicate["id"]}
 
         stage = "chunked"
         chunks = search.chunk_text(content)
@@ -1791,7 +1795,7 @@ async def import_kb(
         stage = "published"
         db.update_import_job(job_id, stage=stage, status="success", total_chunks=len(chunks), error_summary="")
         db.audit(user["id"], "import_kb", "legal_document", doc_id, "success")
-        return RedirectResponse("/kb", status_code=303)
+        return {"status": "success", "job_id": job_id, "document_id": doc_id, "chunk_count": len(chunks)}
     except Exception as exc:
         if doc_id is not None:
             try:
@@ -1802,9 +1806,65 @@ async def import_kb(
         if job_id is not None:
             db.update_import_job(job_id, file_hash=file_hash, stage=stage, status="failed", error_summary=detail)
         db.audit(user["id"], "import_kb", "legal_document", doc_id, "failed")
-        if isinstance(exc, HTTPException):
+        raise
+
+
+@app.post("/kb/import")
+async def import_kb(
+    title: str = Form(""),
+    document_type: str = Form(...),
+    case_cause: str = Form("合同纠纷"),
+    region: str = Form("全国"),
+    year: int = Form(2026),
+    validity_status: str = Form("active"),
+    validity_date: str = Form(""),
+    validity_note: str = Form(""),
+    content: str = Form(""),
+    file: list[UploadFile] | None = File(None),
+    user: dict = Depends(require_role("kb_admin", "sys_admin")),
+):
+    uploads = [item for item in (file or []) if item and item.filename]
+    if len(uploads) > MAX_KB_IMPORT_FILES:
+        raise HTTPException(status_code=400, detail=f"单次最多导入 {MAX_KB_IMPORT_FILES} 个文件")
+    if not uploads and not content.strip():
+        raise HTTPException(status_code=400, detail="请上传文件或填写正文")
+    if not uploads:
+        if not title.strip():
+            raise HTTPException(status_code=400, detail="手动录入时标题不能为空")
+        try:
+            await _import_single_kb_document(
+                title=title.strip(), document_type=document_type, case_cause=case_cause,
+                region=region, year=year, validity_status=validity_status,
+                validity_date=validity_date, validity_note=validity_note, content=content,
+                file=None, user=user,
+            )
+        except HTTPException:
             raise
-        raise HTTPException(status_code=400, detail=f"导入失败：{detail}") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"导入失败：{_error_detail(exc)}") from exc
+        return RedirectResponse("/kb", status_code=303)
+
+    results = []
+    for upload in uploads:
+        stem = Path(upload.filename).stem or "未命名文档"
+        document_title = title.strip() or stem
+        if len(uploads) > 1 and title.strip():
+            document_title = f"{title.strip()} - {stem}"
+        try:
+            results.append(
+                await _import_single_kb_document(
+                    title=document_title, document_type=document_type, case_cause=case_cause,
+                    region=region, year=year, validity_status=validity_status,
+                    validity_date=validity_date, validity_note=validity_note, content="",
+                    file=upload, user=user,
+                )
+            )
+        except Exception:
+            # Each file owns its import job; continue so one bad file cannot block the batch.
+            results.append({"status": "failed", "source_name": upload.filename})
+    if not any(item["status"] in {"success", "skipped"} for item in results):
+        raise HTTPException(status_code=400, detail="批量导入失败，请查看最近导入任务中的错误摘要")
+    return RedirectResponse("/kb", status_code=303)
 
 
 @app.get("/kb/{doc_id}/edit")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import io
 import shutil
 import tempfile
 import unittest
@@ -282,6 +283,70 @@ class SecurityAndApiFlowTests(unittest.TestCase):
         delete_response = self.client.delete(f"/api/kb/documents/{doc_id}")
         self.assertEqual(delete_response.status_code, 200)
         self.assertEqual(delete_response.json()["data"]["status"], "deleted")
+
+    def test_web_kb_import_accepts_multiple_files_and_records_each_job(self) -> None:
+        self.login("kb_admin")
+        response = self.client.post(
+            "/kb/import",
+            data={
+                "title": "批量测试",
+                "document_type": "case",
+                "case_cause": "合同纠纷",
+                "region": "全国",
+                "year": "2026",
+                "validity_status": "active",
+            },
+            files=[
+                ("file", ("case-one.txt", io.BytesIO("甲乙签订买卖合同，乙方逾期付款。".encode()), "text/plain")),
+                ("file", ("case-two.txt", io.BytesIO("甲乙签订服务合同，甲方已经完成交付。".encode()), "text/plain")),
+            ],
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        with db.connect() as conn:
+            docs = conn.execute(
+                "SELECT title, source_name FROM legal_documents WHERE title IN (?, ?) ORDER BY title",
+                ("批量测试 - case-one", "批量测试 - case-two"),
+            ).fetchall()
+            jobs = conn.execute(
+                "SELECT file_name, status FROM import_jobs WHERE file_name IN (?, ?) ORDER BY file_name",
+                ("case-one.txt", "case-two.txt"),
+            ).fetchall()
+        self.assertEqual(len(docs), 2)
+        self.assertEqual(len(jobs), 2)
+        self.assertEqual({job["status"] for job in jobs}, {"success"})
+
+    def test_web_kb_batch_import_continues_after_one_file_fails(self) -> None:
+        self.login("kb_admin")
+        response = self.client.post(
+            "/kb/import",
+            data={
+                "title": "混合批量测试",
+                "document_type": "case",
+                "case_cause": "合同纠纷",
+                "region": "全国",
+                "year": "2026",
+                "validity_status": "active",
+            },
+            files=[
+                ("file", ("unsupported.exe", io.BytesIO(b"not a supported document"), "application/octet-stream")),
+                ("file", ("valid-case.txt", io.BytesIO("甲乙签订合同，乙方未按期付款。".encode()), "text/plain")),
+            ],
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        with db.connect() as conn:
+            failed = conn.execute(
+                "SELECT status, error_summary FROM import_jobs WHERE file_name = ? ORDER BY id DESC LIMIT 1",
+                ("unsupported.exe",),
+            ).fetchone()
+            valid = conn.execute(
+                "SELECT id FROM legal_documents WHERE source_name = ? ORDER BY id DESC LIMIT 1",
+                ("valid-case.txt",),
+            ).fetchone()
+        self.assertEqual(failed["status"], "failed")
+        self.assertIn("只支持", failed["error_summary"])
+        self.assertIsNotNone(valid)
 
 
 if __name__ == "__main__":

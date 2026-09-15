@@ -8,7 +8,7 @@
     <h2>导入知识库</h2>
     <form method="post" action="/kb/import" enctype="multipart/form-data">
       <label>标题</label>
-      <input name="title" required placeholder="例如：服务合同违约模拟案例">
+      <input name="title" placeholder="单文件可填写标题；批量导入时作为标题前缀">
       <label>文档类型</label>
       <select name="document_type">
         <option value="case">case</option>
@@ -32,7 +32,8 @@
       <label>时效提示</label>
       <input name="validity_note" placeholder="例如：该条已于 2021-01-01 废止">
       <label>上传文件</label>
-      <input type="file" name="file" accept=".txt,.pdf,.csv,.json">
+      <input type="file" name="file" accept=".txt,.pdf,.csv,.json" multiple>
+      <p class="muted">支持同时选择多个 TXT、PDF、CSV、JSON 文件。每个文件会独立建立导入任务，文件名将作为未填写标题时的标题。</p>
       <label>正文，也可以直接粘贴文本</label>
       <textarea name="content" placeholder="如果上传了文件，这里可以不填；如果不上传文件，请在这里粘贴知识库内容。"></textarea>
       <div class="actions"><button type="submit">导入并发布</button></div>
