@@ -10,18 +10,15 @@
 
 ## 后端地址
 
-开发者工具和同一 Wi-Fi 下的安卓真机默认读取：
+当前版本默认连接部署在腾讯云服务器上的后端：
 
 ```js
-// miniprogram/utils/config.js
-const API_BASE_URL = "http://10.53.31.3:8003";
+const API_BASE_URL = "http://193.112.28.40";
 ```
 
-如果电脑的 WLAN IPv4 地址发生变化，请修改该地址；后端需监听 `0.0.0.0:8003`。
+这与网页端使用同一个 API、SQLite 数据库和 Chroma 向量库。
 
-安卓真机调试时，电脑和手机必须处于同一个 Wi-Fi，并确保 Windows 防火墙允许 Python/Uvicorn 访问专用网络。
-
-正式发布不能使用局域网 IP 或 `127.0.0.1`。需要部署 FastAPI 后端到有 HTTPS 的公网域名，并在微信公众平台配置该域名为 request 合法域名，然后把 `API_BASE_URL` 改为该 HTTPS 地址。
+正式发布不能使用公网 IP、局域网 IP 或 `127.0.0.1`。需要为服务器配置 HTTPS 域名，在微信公众平台配置该域名为 request 合法域名，然后把 `API_BASE_URL` 改为该 HTTPS 地址。
 
 ## 已实现功能
 

@@ -6,8 +6,8 @@
 
     <string name="server_settings_subtitle">填写后端服务地址，用于连接 AI 法律案例推理系统。保存后自动生效。</string>
     <string name="server_address_label">后端服务地址</string>
-    <string name="server_address_hint">例如：http://172.20.10.4:8001</string>
-    <string name="server_address_help">真机请填写电脑的局域网 IPv4 地址和端口；Android 模拟器请填写 http://10.0.2.2:8001。后端需启动并允许局域网访问。</string>
+    <string name="server_address_hint">例如：http://193.112.28.40</string>
+    <string name="server_address_help">当前版本默认连接腾讯云服务器。Android 模拟器或真机也可在这里改为其他后端地址。</string>
     <string name="quick_fill">快速填入</string>
     <string name="chip_emulator">Android 模拟器</string>
     <string name="chip_lan">默认局域网地址</string>

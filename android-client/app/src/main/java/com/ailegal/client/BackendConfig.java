@@ -9,8 +9,9 @@ final class BackendConfig {
     private static final String PREFS_NAME = "backend_config";
     private static final String KEY_BASE_URL = "base_url";
 
-    // Update this only when the computer's LAN address changes.
-    static final String DEFAULT_BASE_URL = "http://172.20.10.4:8001";
+    // Web, mini program, and Android use the same server backend by default.
+    static final String DEFAULT_BASE_URL = "http://193.112.28.40";
+    private static final String LEGACY_DEFAULT_BASE_URL = "http://172.20.10.4:8001";
 
     // Android 模拟器访问宿主机后端使用的回环地址。
     static final String EMULATOR_BASE_URL = "http://10.0.2.2:8001";
@@ -20,7 +21,11 @@ final class BackendConfig {
 
     static String getBaseUrl(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        return normalize(prefs.getString(KEY_BASE_URL, DEFAULT_BASE_URL));
+        String saved = prefs.getString(KEY_BASE_URL, "");
+        if (TextUtils.isEmpty(saved) || LEGACY_DEFAULT_BASE_URL.equals(normalize(saved))) {
+            return DEFAULT_BASE_URL;
+        }
+        return normalize(saved);
     }
 
     static boolean saveBaseUrl(Context context, String input) {

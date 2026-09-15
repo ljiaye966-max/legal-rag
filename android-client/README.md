@@ -16,12 +16,12 @@ The Android app never contains Aliyun AccessKey values or DashScope keys. Keep t
 
 ## Backend address
 
-Open `Server Settings` in the Android app to change the address without editing source code.
+Open `Server Settings` in the Android app to change the address without editing source code. The current default points to the shared Tencent Cloud backend.
 
-- Android emulator: `http://10.0.2.2:8001`
-- Physical phone: `http://<computer-LAN-IP>:8001`
+- Shared server: `http://193.112.28.40`
+- Android emulator or physical phone: use the shared server above, or change it in `Server Settings`.
 
-For a physical phone, the FastAPI service must listen on `0.0.0.0:8001`, and the phone and computer must be on the same Wi-Fi. Windows Firewall must allow Python/Uvicorn on private networks.
+The shared server is exposed through Nginx on port 80, so the phone and computer do not need to be on the same Wi-Fi.
 
 ## Local HTTP and production
 
