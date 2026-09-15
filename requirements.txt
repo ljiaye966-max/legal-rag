@@ -6,6 +6,7 @@ langchain
 langchain-community
 dashscope
 python-dotenv
+cryptography
 pymysql
 pypdf
 chromadb

@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import db
 from app.security import create_session, hash_password, read_session, verify_password
-from app.services import rag, search, sms_verification, vector_store
+from app.services import config_store, rag, search, sms_verification, vector_store
 from app.settings import (
     BASE_DIR,
     CHAT_MODEL_NAME,
@@ -495,6 +495,20 @@ def _api_ok(data=None, **extra):
     payload = {"code": 0, "message": "ok", "data": data}
     payload.update(extra)
     return payload
+
+
+def _config_for_display(item: dict) -> dict:
+    config = dict(item)
+    if config.get("key") == "dashscope_api_key":
+        config["value"] = "已配置" if config_store.api_key_configured() else "未配置"
+        config["is_secret"] = True
+    return config
+
+
+def _parse_bool(value, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _parse_positive_int(value: str, default: int, minimum: int = 1, maximum: int = 50) -> int:
@@ -1255,14 +1269,25 @@ async def api_feedback(request: Request, user: dict = Depends(require_user)):
 @app.get("/api/configs")
 def api_configs(user: dict = Depends(require_role("sys_admin"))):
     with db.connect() as conn:
-        configs = db.rows_to_dicts(conn.execute("SELECT * FROM system_configs ORDER BY `key`").fetchall())
+        configs = [_config_for_display(item) for item in db.rows_to_dicts(conn.execute("SELECT * FROM system_configs ORDER BY `key`").fetchall())]
     return _api_ok(configs)
 
 
 @app.post("/api/configs")
 async def api_update_configs(request: Request, user: dict = Depends(require_role("sys_admin"))):
     data = await _request_data(request)
-    allowed = {"chat_model", "embedding_model", "top_k", "keyword_weight", "vector_weight"}
+    allowed = {
+        "chat_model",
+        "embedding_model",
+        "use_llm",
+        "use_dashscope_embedding",
+        "dashscope_api_key",
+        "dashscope_base_http_api_url",
+        "dashscope_timeout",
+        "top_k",
+        "keyword_weight",
+        "vector_weight",
+    }
     updated: dict[str, str] = {}
     for key in allowed:
         if key not in data:
@@ -1272,10 +1297,24 @@ async def api_update_configs(request: Request, user: dict = Depends(require_role
             value = str(_parse_positive_int(value, 6, 1, 20))
         elif key in {"keyword_weight", "vector_weight"}:
             value = f"{_parse_weight(value, db.get_float_config(key, 0.5)):.2f}"
+        elif key in {"use_llm", "use_dashscope_embedding"}:
+            value = "true" if _parse_bool(value) else "false"
+        elif key == "dashscope_timeout":
+            value = str(_parse_positive_int(value, 30, 5, 120))
+        elif key == "dashscope_api_key":
+            if _parse_bool(data.get("clear_dashscope_api_key")):
+                value = ""
+            elif value:
+                value = config_store.encrypt_secret(value)
+            else:
+                continue
         elif not value:
             continue
         db.update_config(key, value, user["id"])
-        updated[key] = value
+        updated[key] = "已配置" if key == "dashscope_api_key" and value else ("未配置" if key == "dashscope_api_key" else value)
+    if _parse_bool(data.get("clear_dashscope_api_key")):
+        db.update_config("dashscope_api_key", "", user["id"])
+        updated["dashscope_api_key"] = "未配置"
     db.audit(user["id"], "api_update_config", "system_config", None, "success")
     return _api_ok(updated)
 
@@ -1907,7 +1946,7 @@ def feedback(
 def system_page(request: Request, user: dict = Depends(require_role("sys_admin"))):
     with db.connect() as conn:
         users = db.rows_to_dicts(conn.execute("SELECT id, username, display_name, role, status, created_at, last_login_at FROM users").fetchall())
-        configs = db.rows_to_dicts(conn.execute("SELECT * FROM system_configs ORDER BY `key`").fetchall())
+        configs = [_config_for_display(item) for item in db.rows_to_dicts(conn.execute("SELECT * FROM system_configs ORDER BY `key`").fetchall())]
         audits = db.rows_to_dicts(
             conn.execute(
                 """
@@ -1933,6 +1972,7 @@ def system_page(request: Request, user: dict = Depends(require_role("sys_admin")
             "users": users,
             "configs": configs,
             "config_map": {item["key"]: item for item in configs},
+            "api_key_configured": config_store.api_key_configured(),
             "audits": audits,
             "feedbacks": feedbacks,
             "quality_metrics": _quality_metrics(),
@@ -1944,6 +1984,12 @@ def system_page(request: Request, user: dict = Depends(require_role("sys_admin")
 def update_system_configs(
     chat_model: str = Form(...),
     embedding_model: str = Form(...),
+    use_llm: str = Form("false"),
+    use_dashscope_embedding: str = Form("false"),
+    dashscope_api_key: str = Form(""),
+    clear_dashscope_api_key: str | None = Form(None),
+    dashscope_base_http_api_url: str = Form(""),
+    dashscope_timeout: str = Form("30"),
     top_k: str = Form(...),
     keyword_weight: str = Form(...),
     vector_weight: str = Form(...),
@@ -1952,12 +1998,20 @@ def update_system_configs(
     values = {
         "chat_model": chat_model.strip() or "qwen-plus",
         "embedding_model": embedding_model.strip() or "text-embedding-v4",
+        "use_llm": "true" if _parse_bool(use_llm) else "false",
+        "use_dashscope_embedding": "true" if _parse_bool(use_dashscope_embedding) else "false",
+        "dashscope_base_http_api_url": dashscope_base_http_api_url.strip(),
+        "dashscope_timeout": str(_parse_positive_int(dashscope_timeout, 30, 5, 120)),
         "top_k": str(_parse_positive_int(top_k, 6, 1, 20)),
         "keyword_weight": f"{_parse_weight(keyword_weight, 0.4):.2f}",
         "vector_weight": f"{_parse_weight(vector_weight, 0.6):.2f}",
     }
     for key, value in values.items():
         db.update_config(key, value, user["id"])
+    if clear_dashscope_api_key:
+        db.update_config("dashscope_api_key", "", user["id"])
+    elif dashscope_api_key.strip():
+        db.update_config("dashscope_api_key", config_store.encrypt_secret(dashscope_api_key.strip()), user["id"])
     db.audit(user["id"], "update_config", "system_config", None, "success")
     return RedirectResponse("/system", status_code=303)
 

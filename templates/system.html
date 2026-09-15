@@ -65,6 +65,35 @@
           <input name="embedding_model" value="{{ config_map.embedding_model.value if config_map.embedding_model else 'text-embedding-v4' }}" required>
         </div>
         <div>
+          <label class="checkbox-label">
+            <input name="use_llm" type="checkbox" value="true" {% if config_map.use_llm and config_map.use_llm.value == 'true' %}checked{% endif %}>
+            启用通义千问生成
+          </label>
+        </div>
+        <div>
+          <label class="checkbox-label">
+            <input name="use_dashscope_embedding" type="checkbox" value="true" {% if config_map.use_dashscope_embedding and config_map.use_dashscope_embedding.value == 'true' %}checked{% endif %}>
+            启用通义千问向量模型
+          </label>
+        </div>
+        <div>
+          <label>通义千问 API Key</label>
+          <input name="dashscope_api_key" type="password" autocomplete="new-password" placeholder="{% if api_key_configured %}已配置，留空保持不变{% else %}粘贴 DashScope API Key{% endif %}">
+          <small class="muted">服务端加密保存，页面不会回显密钥。</small>
+          {% if api_key_configured %}
+          <label class="checkbox-label"><input name="clear_dashscope_api_key" type="checkbox" value="true"> 清除已保存的 Key</label>
+          {% endif %}
+        </div>
+        <div>
+          <label>通义千问 API 地址</label>
+          <input name="dashscope_base_http_api_url" value="{{ config_map.dashscope_base_http_api_url.value if config_map.dashscope_base_http_api_url else '' }}" placeholder="留空使用默认地址">
+          <small class="muted">切换向量模型后建议重新导入或重建知识库索引。</small>
+        </div>
+        <div>
+          <label>请求超时（秒）</label>
+          <input name="dashscope_timeout" type="number" min="5" max="120" value="{{ config_map.dashscope_timeout.value if config_map.dashscope_timeout else '30' }}" required>
+        </div>
+        <div>
           <label>Top-K</label>
           <input name="top_k" type="number" min="1" max="20" value="{{ config_map.top_k.value if config_map.top_k else '6' }}" required>
         </div>

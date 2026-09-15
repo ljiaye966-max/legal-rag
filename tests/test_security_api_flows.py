@@ -165,6 +165,30 @@ class SecurityAndApiFlowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["code"], 0)
 
+    def test_admin_qwen_config_is_encrypted_and_masked(self) -> None:
+        self.login("admin")
+        response = self.client.post(
+            "/api/configs",
+            json={"use_llm": True, "dashscope_api_key": "sk-test-secret"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["dashscope_api_key"], "已配置")
+
+        with db.connect() as conn:
+            stored = conn.execute(
+                "SELECT value FROM system_configs WHERE `key` = 'dashscope_api_key'"
+            ).fetchone()["value"]
+        self.assertTrue(stored.startswith("fernet:v1:"))
+        self.assertNotIn("sk-test-secret", stored)
+
+        configs = self.client.get("/api/configs")
+        self.assertEqual(configs.status_code, 200)
+        api_key = next(item for item in configs.json()["data"] if item["key"] == "dashscope_api_key")
+        self.assertEqual(api_key["value"], "已配置")
+        self.assertNotIn("sk-test-secret", configs.text)
+
+        self.client.post("/api/configs", json={"clear_dashscope_api_key": True})
+
     def test_disabled_user_existing_session_is_rejected(self) -> None:
         self.login("user01")
         with db.connect() as conn:

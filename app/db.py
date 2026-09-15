@@ -9,7 +9,19 @@ from datetime import datetime
 from typing import Any, Iterable
 
 from app.security import hash_password
-from app.settings import DATABASE_PATH, DB_TYPE, MYSQL_DATABASE, MYSQL_HOST, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER
+from app.settings import (
+    DATABASE_PATH,
+    DB_TYPE,
+    DASHSCOPE_BASE_HTTP_API_URL,
+    DASHSCOPE_TIMEOUT,
+    MYSQL_DATABASE,
+    MYSQL_HOST,
+    MYSQL_PASSWORD,
+    MYSQL_PORT,
+    MYSQL_USER,
+    USE_DASHSCOPE_EMBEDDING,
+    USE_LLM,
+)
 
 
 _request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
@@ -266,6 +278,11 @@ def seed_configs() -> None:
     configs = [
         ("chat_model", "qwen-plus", "通义千问对话模型"),
         ("embedding_model", "text-embedding-v4", "通义千问向量模型，可关闭后使用本地向量"),
+        ("use_llm", "true" if USE_LLM else "false", "是否启用通义千问生成"),
+        ("use_dashscope_embedding", "true" if USE_DASHSCOPE_EMBEDDING else "false", "是否启用通义千问向量模型"),
+        ("dashscope_api_key", "", "通义千问 API Key（加密保存，仅显示配置状态）"),
+        ("dashscope_base_http_api_url", DASHSCOPE_BASE_HTTP_API_URL, "通义千问 API 地址，可留空使用默认地址"),
+        ("dashscope_timeout", str(DASHSCOPE_TIMEOUT), "通义千问请求超时时间（秒）"),
         ("top_k", "6", "检索返回证据数量"),
         ("keyword_weight", "0.35", "关键词检索权重"),
         ("vector_weight", "0.65", "语义向量检索权重"),

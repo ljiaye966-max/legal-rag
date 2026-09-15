@@ -8,6 +8,15 @@ import time
 from typing import Any
 
 from app import db
+from app.services.config_store import (
+    chat_model,
+    dashscope_api_key,
+    dashscope_base_url,
+    dashscope_timeout,
+    embedding_model,
+    use_dashscope_embedding,
+    use_llm,
+)
 from app.settings import (
     ASSISTANT_MIN_RELEVANCE_SCORE,
     CHAT_MODEL_NAME,
@@ -395,24 +404,26 @@ def build_prompt(case_text: str, facts: dict[str, Any], evidence: list[dict[str,
 
 
 def _qwen_chat(messages: list[dict[str, str]], *, max_tokens: int) -> tuple[str | None, str | None]:
-    api_key = os.getenv("DASHSCOPE_API_KEY")
-    if not USE_LLM or not api_key:
-        if USE_LLM and not api_key:
+    api_key = dashscope_api_key()
+    llm_enabled = use_llm()
+    if not llm_enabled or not api_key:
+        if llm_enabled and not api_key:
             return None, "已开启 USE_LLM，但未配置 DASHSCOPE_API_KEY，系统已降级为本地模板生成。"
         return None, None
     try:
         import dashscope
 
-        if DASHSCOPE_BASE_HTTP_API_URL:
-            dashscope.base_http_api_url = DASHSCOPE_BASE_HTTP_API_URL
+        base_url = dashscope_base_url()
+        if base_url:
+            dashscope.base_http_api_url = base_url
         response = dashscope.Generation.call(
-            model=db.get_config("chat_model", CHAT_MODEL_NAME),
+            model=chat_model(),
             messages=messages,
             api_key=api_key,
             result_format="message",
             temperature=0.1,
             max_tokens=max_tokens,
-            timeout=DASHSCOPE_TIMEOUT,
+            timeout=dashscope_timeout(),
         )
         status_code = int(getattr(response, "status_code", 500) or 500)
         if status_code != 200:
@@ -682,9 +693,10 @@ def retrieval_config() -> str:
             "top_k": db.get_int_config("top_k", TOP_K),
             "keyword_weight": db.get_float_config("keyword_weight", KEYWORD_WEIGHT),
             "vector_weight": db.get_float_config("vector_weight", VECTOR_WEIGHT),
-            "chat_model": db.get_config("chat_model", CHAT_MODEL_NAME),
-            "embedding_model": db.get_config("embedding_model", EMBEDDING_MODEL_NAME),
-            "use_dashscope_embedding": USE_DASHSCOPE_EMBEDDING,
+            "chat_model": chat_model(),
+            "embedding_model": embedding_model(),
+            "use_llm": use_llm(),
+            "use_dashscope_embedding": use_dashscope_embedding(),
         },
         ensure_ascii=False,
     )

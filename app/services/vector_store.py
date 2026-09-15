@@ -10,6 +10,7 @@ from http import HTTPStatus
 from typing import Any
 
 from app import db
+from app.services.config_store import dashscope_api_key, embedding_model, use_dashscope_embedding
 from app.settings import CHROMA_COLLECTION, CHROMA_PATH, EMBEDDING_MODEL_NAME, USE_DASHSCOPE_EMBEDDING
 
 
@@ -35,15 +36,16 @@ def local_vectorize(text: str, dims: int = 128) -> list[float]:
 
 
 def dashscope_embedding(text: str) -> list[float] | None:
-    if not USE_DASHSCOPE_EMBEDDING or not os.getenv("DASHSCOPE_API_KEY"):
+    api_key = dashscope_api_key()
+    if not use_dashscope_embedding() or not api_key:
         return None
     try:
         import dashscope
 
         response = dashscope.TextEmbedding.call(
-            model=db.get_config("embedding_model", EMBEDDING_MODEL_NAME),
+            model=embedding_model(),
             input=text[:6000],
-            api_key=os.getenv("DASHSCOPE_API_KEY"),
+            api_key=api_key,
         )
         if response.status_code != HTTPStatus.OK:
             return None
