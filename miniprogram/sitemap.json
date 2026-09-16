@@ -1,4 +1,9 @@
 {
   "desc": "AI 法律案例推理系统小程序站点配置",
-  "rules": []
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
 }
