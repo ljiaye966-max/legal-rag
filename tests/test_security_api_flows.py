@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from app import db
 from app.main import app
+from app.services import vector_store
 
 
 class SecurityAndApiFlowTests(unittest.TestCase):
@@ -189,6 +190,38 @@ class SecurityAndApiFlowTests(unittest.TestCase):
         self.assertNotIn("sk-test-secret", configs.text)
 
         self.client.post("/api/configs", json={"clear_dashscope_api_key": True})
+
+    def test_embedding_config_change_rebuilds_active_chroma_index(self) -> None:
+        self.login("admin")
+        db.update_config("use_dashscope_embedding", "false", 1)
+        with patch("app.main.db.rebuild_chroma_index") as rebuild:
+            response = self.client.post("/api/configs", json={"use_dashscope_embedding": True})
+        self.assertEqual(response.status_code, 200)
+        rebuild.assert_called_once()
+
+    def test_compare_page_and_api_return_case_candidates(self) -> None:
+        self.login("user01")
+        page = self.client.get("/compare")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("类案对比", page.text)
+
+        response = self.client.get("/api/compare")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertGreaterEqual(len(data["candidate_cases"]), 2)
+        self.assertGreaterEqual(len(data["cases"]), 2)
+
+    def test_chroma_sync_batches_embedding_requests(self) -> None:
+        with (
+            patch("app.services.vector_store.list_chunk_ids", return_value=set()),
+            patch("app.services.vector_store.delete_chunks"),
+            patch("app.services.vector_store.upsert_chunks") as upsert,
+        ):
+            db.sync_chroma_index()
+        self.assertGreater(upsert.call_count, 0)
+        self.assertTrue(
+            all(len(call.args[0]) <= vector_store.EMBEDDING_BATCH_SIZE for call in upsert.call_args_list)
+        )
 
     def test_disabled_user_existing_session_is_rejected(self) -> None:
         self.login("user01")

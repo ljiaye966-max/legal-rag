@@ -1280,6 +1280,10 @@ def api_configs(user: dict = Depends(require_role("sys_admin"))):
 @app.post("/api/configs")
 async def api_update_configs(request: Request, user: dict = Depends(require_role("sys_admin"))):
     data = await _request_data(request)
+    previous_embedding_config = (
+        config_store.use_dashscope_embedding(),
+        config_store.embedding_model(),
+    )
     allowed = {
         "chat_model",
         "embedding_model",
@@ -1319,6 +1323,11 @@ async def api_update_configs(request: Request, user: dict = Depends(require_role
     if _parse_bool(data.get("clear_dashscope_api_key")):
         db.update_config("dashscope_api_key", "", user["id"])
         updated["dashscope_api_key"] = "未配置"
+    if previous_embedding_config != (
+        config_store.use_dashscope_embedding(),
+        config_store.embedding_model(),
+    ):
+        db.rebuild_chroma_index()
     db.audit(user["id"], "api_update_config", "system_config", None, "success")
     return _api_ok(updated)
 
@@ -2084,6 +2093,10 @@ def update_system_configs(
     vector_weight: str = Form(...),
     user: dict = Depends(require_role("sys_admin")),
 ):
+    previous_embedding_config = (
+        config_store.use_dashscope_embedding(),
+        config_store.embedding_model(),
+    )
     values = {
         "chat_model": chat_model.strip() or "qwen-plus",
         "embedding_model": embedding_model.strip() or "text-embedding-v4",
@@ -2101,6 +2114,11 @@ def update_system_configs(
         db.update_config("dashscope_api_key", "", user["id"])
     elif dashscope_api_key.strip():
         db.update_config("dashscope_api_key", config_store.encrypt_secret(dashscope_api_key.strip()), user["id"])
+    if previous_embedding_config != (
+        config_store.use_dashscope_embedding(),
+        config_store.embedding_model(),
+    ):
+        db.rebuild_chroma_index()
     db.audit(user["id"], "update_config", "system_config", None, "success")
     return RedirectResponse("/system", status_code=303)
 

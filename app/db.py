@@ -463,9 +463,26 @@ def sync_chroma_index() -> None:
     target_ids = {int(row["chunk_id"]) for row in rows}
     stale_ids = vector_store.list_chunk_ids() - target_ids
     vector_store.delete_chunks(sorted(stale_ids))
-    for row in rows:
-        metadata = {key: row.get(key) for key in row.keys() if key != "content"}
-        vector_store.upsert_chunk(int(row["chunk_id"]), row["content"], metadata)
+    for start in range(0, len(rows), vector_store.EMBEDDING_BATCH_SIZE):
+        batch = rows[start : start + vector_store.EMBEDDING_BATCH_SIZE]
+        vector_store.upsert_chunks(
+            [
+                (
+                    int(row["chunk_id"]),
+                    row["content"],
+                    {key: row.get(key) for key in row.keys() if key != "content"},
+                )
+                for row in batch
+            ]
+        )
+
+
+def rebuild_chroma_index() -> None:
+    """Recreate the active embedding collection from the database source of truth."""
+    from app.services import vector_store
+
+    vector_store.reset_collection()
+    sync_chroma_index()
 
 
 def audit(actor_id: int | None, action: str, object_type: str, object_id: int | None, result: str, request_id: str | None = None) -> None:

@@ -15,6 +15,7 @@ from app.settings import CHROMA_COLLECTION, CHROMA_PATH, EMBEDDING_MODEL_NAME, U
 
 
 logger = logging.getLogger(__name__)
+EMBEDDING_BATCH_SIZE = 10
 
 
 def tokenize(text: str) -> list[str]:
@@ -35,31 +36,46 @@ def local_vectorize(text: str, dims: int = 128) -> list[float]:
     return [value / norm for value in vector]
 
 
-def dashscope_embedding(text: str) -> list[float] | None:
+def dashscope_embeddings(texts: list[str]) -> list[list[float]] | None:
     api_key = dashscope_api_key()
-    if not use_dashscope_embedding() or not api_key:
+    if not texts or not use_dashscope_embedding() or not api_key:
         return None
     try:
         import dashscope
 
         response = dashscope.TextEmbedding.call(
             model=embedding_model(),
-            input=text[:6000],
+            input=[text[:6000] for text in texts],
             api_key=api_key,
         )
         if response.status_code != HTTPStatus.OK:
             return None
         embeddings = response.output.get("embeddings") or []
-        if not embeddings:
+        vectors = [item.get("embedding") for item in embeddings if item.get("embedding")]
+        if len(vectors) != len(texts):
             return None
-        return embeddings[0]["embedding"]
+        return vectors
     except Exception:
-        logger.warning("DashScope embedding failed; falling back to local vectors.", exc_info=True)
+        logger.warning("DashScope embedding request failed.", exc_info=True)
         return None
 
 
-def embed_text(text: str) -> list[float]:
-    return dashscope_embedding(text) or local_vectorize(text)
+def dashscope_embedding(text: str) -> list[float] | None:
+    embeddings = dashscope_embeddings([text])
+    return embeddings[0] if embeddings else None
+
+
+def embed_text(text: str) -> list[float] | None:
+    # Do not mix a local fallback vector into a DashScope collection: their dimensions differ.
+    if use_dashscope_embedding() and dashscope_api_key():
+        return dashscope_embedding(text)
+    return local_vectorize(text)
+
+
+def embed_texts(texts: list[str]) -> list[list[float]] | None:
+    if use_dashscope_embedding() and dashscope_api_key():
+        return dashscope_embeddings(texts)
+    return [local_vectorize(text) for text in texts]
 
 
 def _client():
@@ -68,9 +84,17 @@ def _client():
     return chromadb.PersistentClient(path=str(CHROMA_PATH))
 
 
+def collection_name() -> str:
+    """Keep vectors from embedding providers with different dimensions isolated."""
+    if use_dashscope_embedding() and dashscope_api_key():
+        safe_model = re.sub(r"[^a-z0-9]+", "_", embedding_model().lower()).strip("_")
+        return f"{CHROMA_COLLECTION}_dashscope_{safe_model or 'default'}"
+    return f"{CHROMA_COLLECTION}_local_128"
+
+
 def collection():
     return _client().get_or_create_collection(
-        name=CHROMA_COLLECTION,
+        name=collection_name(),
         metadata={"hnsw:space": "cosine"},
     )
 
@@ -80,12 +104,24 @@ def chunk_chroma_id(chunk_id: int) -> str:
 
 
 def upsert_chunk(chunk_id: int, content: str, metadata: dict[str, Any]) -> None:
-    safe_metadata = {key: "" if value is None else value for key, value in metadata.items()}
+    upsert_chunks([(chunk_id, content, metadata)])
+
+
+def upsert_chunks(chunks: list[tuple[int, str, dict[str, Any]]]) -> None:
+    if not chunks:
+        return
+    embeddings = embed_texts([content for _, content, _ in chunks])
+    if embeddings is None:
+        logger.warning("Skipping DashScope vector upsert because no embedding was returned.")
+        return
     collection().upsert(
-        ids=[chunk_chroma_id(chunk_id)],
-        documents=[content],
-        embeddings=[embed_text(content)],
-        metadatas=[safe_metadata],
+        ids=[chunk_chroma_id(chunk_id) for chunk_id, _, _ in chunks],
+        documents=[content for _, content, _ in chunks],
+        embeddings=embeddings,
+        metadatas=[
+            {key: "" if value is None else value for key, value in metadata.items()}
+            for _, _, metadata in chunks
+        ],
     )
 
 
@@ -100,8 +136,12 @@ def delete_document(document_id: int) -> None:
 
 
 def query(query_text: str, where: dict[str, Any] | None = None, limit: int = 6) -> list[dict[str, Any]]:
+    embedding = embed_text(query_text)
+    if embedding is None:
+        logger.warning("Skipping DashScope vector query because no embedding was returned.")
+        return []
     results = collection().query(
-        query_embeddings=[embed_text(query_text)],
+        query_embeddings=[embedding],
         n_results=limit,
         where=where or None,
         include=["documents", "metadatas", "distances"],
@@ -126,10 +166,10 @@ def query(query_text: str, where: dict[str, Any] | None = None, limit: int = 6) 
 def reset_collection() -> None:
     client = _client()
     try:
-        client.delete_collection(CHROMA_COLLECTION)
+        client.delete_collection(collection_name())
     except Exception:
         pass
-    client.get_or_create_collection(name=CHROMA_COLLECTION, metadata={"hnsw:space": "cosine"})
+    client.get_or_create_collection(name=collection_name(), metadata={"hnsw:space": "cosine"})
 
 
 def list_chunk_ids() -> set[int]:
